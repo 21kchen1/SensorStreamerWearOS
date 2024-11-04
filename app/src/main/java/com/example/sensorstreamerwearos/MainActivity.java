@@ -317,7 +317,7 @@ public class MainActivity extends WearableActivity implements SensorEventListene
                 socket.send(packet);
                 Log.d("VM", "Sending data");
                 } catch (UnknownHostException e) {
-                    e.printStackTrace();
+                    e.printStackTrace();//
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
