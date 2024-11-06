@@ -22,6 +22,9 @@ import androidx.core.content.ContextCompat;
 
 import com.SensorStreamer.Link.Link;
 import com.SensorStreamer.Link.UDPLinkF;
+import com.SensorStreamer.Listen.AudioListen;
+import com.SensorStreamer.Listen.AudioListenF;
+import com.SensorStreamer.Listen.Listen;
 import com.SensorStreamer.databinding.ActivityMainBinding;
 
 import java.io.IOException;
@@ -34,7 +37,7 @@ import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 
-public class MainActivity extends WearableActivity implements SensorEventListener {
+public class MainActivity extends WearableActivity implements SensorEventListener, Listen.AudioCallback {
 
     private static final String LOG_TAG = "log tag";
     private Button startButton,stopButton;
@@ -52,13 +55,17 @@ public class MainActivity extends WearableActivity implements SensorEventListene
     int minBufSize = AudioRecord.getMinBufferSize(audioSamplingRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
 
     // random
-    private String SERVER = "192.168.0.175"; // tplink5g
+    private String SERVER = "192.168.1.101"; // tplink5g
 
 //    创建 Link 类
     UDPLinkF udpLinkF = new UDPLinkF();
     final private Link link = udpLinkF.create();
     private InetAddress serverAddress;
 //    private DatagramSocket socket;
+
+    AudioListenF audioListenF = new AudioListenF();
+    final private AudioListen audioListen = (AudioListen) audioListenF.create();
+
     private boolean status = true;
     private PowerManager.WakeLock mWakeLock;
     private PowerManager powerManager;
@@ -154,8 +161,9 @@ public class MainActivity extends WearableActivity implements SensorEventListene
         @Override
         public void onClick(View arg0) {
             status = false;
-            audioRecorder.release();
             link.off();
+            audioListen.stopRead();
+            audioListen.off();
 //            socket.close();
 //            mIsRecording.set(false);
             Log.d("VS","Recorder released");
@@ -170,59 +178,27 @@ public class MainActivity extends WearableActivity implements SensorEventListene
         public void onClick(View arg0) {
             status = true;
             SERVER = ipAddr.getText().toString();
-//            try {
-//                socket = new DatagramSocket();
-            link.star();
-            Log.d("VS", "Socket Created");
-//            } catch (SocketException e) {
-//                e.printStackTrace();
-//            }
+            try {
+                link.launch(InetAddress.getByName(SERVER), port);
+                audioListen.launch(audioSamplingRate, MainActivity.this);
+            } catch (UnknownHostException e) {
+                Log.e("VS", "UnknownHostException", e);
+                return;
+            }
             registerSensors();
-            startStreaming();
+//            startStreaming();
+            audioListen.startRead();
         }
 
     };
 
-    public void startStreaming() {
-        Thread streamThread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    byte[] buffer = new byte[minBufSize];
-
-                    Log.d("VS","Buffer created of size " + minBufSize);
-                    DatagramPacket packet;
-                    Log.d("VS", "Address retrieved");
-                    final InetAddress destination = InetAddress.getByName(SERVER);
-                    Log.d("VS", "Address retrieved");
-
-                    audioRecorder = new AudioRecord(MediaRecorder.AudioSource.MIC,audioSamplingRate,
-                            AudioFormat.CHANNEL_IN_MONO,AudioFormat.ENCODING_PCM_16BIT,
-                            minBufSize*10);
-                    Log.d("VS", "Recorder initialized");
-                    audioRecorder.startRecording();
-
-                    while(status) {
-                        //reading data from MIC into buffer
-                        int n_read;
-                        n_read = audioRecorder.read(buffer, 0, buffer.length);
-                        // get current timestamp and send that as well
-                        long unixTime = System.currentTimeMillis();
-                        String unixString = String.valueOf(unixTime) + ",";
-
-                        String audio_encoded = unixString + "audio," + Base64.getEncoder().encodeToString(buffer);
-
-                        byte[] audio_buf = audio_encoded.getBytes(StandardCharsets.UTF_8);
-                        // 发送数据
-                        link.send(destination, port, audio_buf);
-                        System.out.println("MinBufferSize: " +minBufSize + " ,new buff size " + audio_buf.length + ", nread, " + n_read);
-                    }
-                } catch(UnknownHostException e) {
-                    Log.e("VS", "UnknownHostException",e);
-                }
-            }
-        });
-        streamThread.start();
+    @Override
+    public void dealAudioData(byte[] data) {
+        String audio_encoded = System.currentTimeMillis() + ",audio," + Base64.getEncoder().encodeToString(data);
+        byte[] audio_buf = audio_encoded.getBytes(StandardCharsets.UTF_8);
+        // 发送数据
+        link.send(audio_buf);
+        System.out.println("MinBufferSize: " +minBufSize + " ,new buff size " + audio_buf.length);
     }
 
     private void wakeLockAcquire(){
@@ -278,9 +254,7 @@ public class MainActivity extends WearableActivity implements SensorEventListene
                 final InetAddress destination;
                 try {
                     destination = InetAddress.getByName(SERVER);
-                    link.send(destination, port, buf);
-//                DatagramPacket packet = new DatagramPacket(buf, buf.length, destination, port);
-//                socket.send(packet);
+                    link.send(buf);
                 Log.d("VM", "Sending data");
                 } catch (UnknownHostException e) {
                     e.printStackTrace();//
@@ -296,9 +270,7 @@ public class MainActivity extends WearableActivity implements SensorEventListene
         // NOTE: This is the place to change the timestamp to unix if we want to
         long sensorTimestamp = sensorEvent.timestamp;
         long unixTimestamp = System.currentTimeMillis();
-//        long timeInMillis = System.currentTimeMillis() + (sensorEvent.timestamp - System.nanoTime()) / 1000000L;
-//        Log.d("Timestamps", "SystemTime: " + String.valueOf(timestamp) + ", Corrected: " +
-//                String.valueOf(timeInMillis) + ", SensorTime: " + String.valueOf(sensorEvent.timestamp));
+
         Sensor eachSensor = sensorEvent.sensor;
         switch (eachSensor.getType()) {
             case Sensor.TYPE_ACCELEROMETER:
@@ -307,9 +279,6 @@ public class MainActivity extends WearableActivity implements SensorEventListene
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-//                    if (isFileSaved) {
-//                        mFileStreamer.addRecord(sensorTimestamp, "acce", 3, sensorEvent.values, unixTimestamp);
-//                    }
                 break;
 
             case Sensor.TYPE_GYROSCOPE:
@@ -318,9 +287,6 @@ public class MainActivity extends WearableActivity implements SensorEventListene
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-//                    if (isFileSaved) {
-//                        mFileStreamer.addRecord(sensorTimestamp, "gyro", 3, sensorEvent.values, unixTimestamp);
-//                    }
                 break;
 
             case Sensor.TYPE_MAGNETIC_FIELD:
@@ -329,9 +295,6 @@ public class MainActivity extends WearableActivity implements SensorEventListene
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-//                    if (isFileSaved) {
-//                        mFileStreamer.addRecord(sensorTimestamp, "magnet", 3, sensorEvent.values, unixTimestamp);
-//                    }
                 break;
 
             case Sensor.TYPE_ROTATION_VECTOR:
@@ -340,9 +303,6 @@ public class MainActivity extends WearableActivity implements SensorEventListene
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-//                    if (isFileSaved) {
-//                        mFileStreamer.addRecord(sensorTimestamp, "rotvec", 4, sensorEvent.values, unixTimestamp);
-//                    }
                 break;
         }
     }

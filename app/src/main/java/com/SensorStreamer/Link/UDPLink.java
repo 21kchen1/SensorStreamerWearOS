@@ -16,22 +16,22 @@ import java.net.SocketException;
 
 public class UDPLink extends Link {
     private DatagramSocket socket;
+    private InetAddress address;
+    private int port;
 
     UDPLink () {
     }
 
-    /**
-     * 启动 socket
-     * @return 是否成功
-     * */
     @Override
-    public boolean star() {
-        if (socket != null && !socket.isClosed()) {
+    public boolean launch(InetAddress address, int port) {
+        if (this.socket != null && !this.socket.isClosed()) {
             return false;
         }
 
         try {
-            socket = new DatagramSocket();
+            this.address = address;
+            this.port = port;
+            this.socket = new DatagramSocket();
         } catch (SocketException e) {
             Log.d("UDPLinker", "SocketException", e);
             return false;
@@ -39,46 +39,30 @@ public class UDPLink extends Link {
         return true;
     }
 
-    /**
-     * 关闭 socket
-     * @return 是否成功
-     * */
     @Override
     public boolean off() {
-        if (socket == null || socket.isClosed()) {
+        if (this.socket == null || this.socket.isClosed()) {
             return false;
         }
-        socket.close();
+        this.socket.close();
         return true;
     }
 
-    /**
-     * 基于 UDP 发送数据
-     * @param address 目的地址
-     * @param port 目的端口
-     * @param buf 二进制缓存
-     * */
     @Override
-    public void send(InetAddress address, int port, byte[] buf) {
+    public void send(byte[] buf) {
         try {
             DatagramPacket packet = new DatagramPacket(buf, buf.length, address, port);
-            socket.send(packet);
+            this.socket.send(packet);
         } catch (IOException e) {
             Log.e("UDPLinker.send", "IOException", e);
         }
     }
 
-    /**
-     * 基于 UDP 接收数据
-     * @param address 目的地址
-     * @param port 目的端口
-     * @param buf 二进制缓存
-     * */
     @Override
-    public void rece(InetAddress address, int port, byte[] buf) {
+    public void rece(byte[] buf) {
         try {
             DatagramPacket packet = new DatagramPacket(buf, buf.length, address, port);
-            socket.receive(packet);
+            this.socket.receive(packet);
         } catch (IOException e) {
             Log.e("UDPLinker.rece", "IOException", e);
         }
