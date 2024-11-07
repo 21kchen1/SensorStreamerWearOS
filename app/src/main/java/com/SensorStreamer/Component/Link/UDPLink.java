@@ -1,4 +1,4 @@
-package com.SensorStreamer.Link;
+package com.SensorStreamer.Component.Link;
 
 import android.util.Log;
 
@@ -34,6 +34,7 @@ public class UDPLink extends Link {
             this.socket = new DatagramSocket();
         } catch (SocketException e) {
             Log.d("UDPLinker", "SocketException", e);
+            this.off();
             return false;
         }
         return true;
@@ -50,6 +51,9 @@ public class UDPLink extends Link {
 
     @Override
     public void send(byte[] buf) {
+        if (this.socket == null)
+            return;
+
         try {
             DatagramPacket packet = new DatagramPacket(buf, buf.length, address, port);
             this.socket.send(packet);
@@ -60,6 +64,9 @@ public class UDPLink extends Link {
 
     @Override
     public void rece(byte[] buf) {
+        if (this.socket == null)
+            return;
+
         try {
             DatagramPacket packet = new DatagramPacket(buf, buf.length, address, port);
             this.socket.receive(packet);
