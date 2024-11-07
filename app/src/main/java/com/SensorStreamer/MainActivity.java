@@ -4,12 +4,9 @@ import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
-import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.support.wearable.activity.WearableActivity;
@@ -20,57 +17,55 @@ import android.widget.TextView;
 
 import androidx.core.content.ContextCompat;
 
-import com.SensorStreamer.Link.Link;
-import com.SensorStreamer.Link.UDPLinkF;
-import com.SensorStreamer.Listen.AudioListen;
-import com.SensorStreamer.Listen.AudioListenF;
-import com.SensorStreamer.Listen.Listen;
+import com.SensorStreamer.Component.Link.Link;
+import com.SensorStreamer.Component.Link.UDPLinkF;
+import com.SensorStreamer.Component.Listen.AudioListen;
+import com.SensorStreamer.Component.Listen.AudioListenF;
+import com.SensorStreamer.Component.Listen.IMUListen;
+import com.SensorStreamer.Component.Listen.IMUListenF;
+import com.SensorStreamer.Model.AudioData;
+import com.SensorStreamer.Model.IMUData;
 import com.SensorStreamer.databinding.ActivityMainBinding;
+import com.google.gson.Gson;
 
-import java.io.IOException;
-import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 
-public class MainActivity extends WearableActivity implements SensorEventListener, Listen.AudioCallback {
+public class MainActivity extends WearableActivity implements AudioListen.AudioCallback, IMUListen.IMUCallback {
 
     private static final String LOG_TAG = "log tag";
     private Button startButton,stopButton;
 
     private TextView ipAddr;
+//    留着后续更新 ui
     private TextView unixTimeText;
     private ActivityMainBinding binding;
     private AtomicBoolean mIsRecording = new AtomicBoolean(false);
     private int port = 5005;
+    private final Gson gson = new Gson();
 
     // audio stuff
-    private AudioRecord audioRecorder;
-    int audioBufferSize = 160*2;
     int audioSamplingRate = 16000;
-    int minBufSize = AudioRecord.getMinBufferSize(audioSamplingRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
-
     // random
     private String SERVER = "192.168.1.101"; // tplink5g
 
 //    创建 Link 类
     UDPLinkF udpLinkF = new UDPLinkF();
     final private Link link = udpLinkF.create();
-    private InetAddress serverAddress;
-//    private DatagramSocket socket;
 
     AudioListenF audioListenF = new AudioListenF();
     final private AudioListen audioListen = (AudioListen) audioListenF.create();
 
-    private boolean status = true;
+    IMUListenF imuListenF = new IMUListenF();
+    final private IMUListen imuListen = (IMUListen) imuListenF.create();
+
     private PowerManager.WakeLock mWakeLock;
     private PowerManager powerManager;
     private SensorManager mSensorManager;
-    private HashMap<String, Sensor> mSensors = new HashMap<>();
+//    private HashMap<String, Sensor> mSensors = new HashMap<>();
 
 
     private final static int REQUEST_CODE_ANDROID = 1001;
@@ -112,12 +107,12 @@ public class MainActivity extends WearableActivity implements SensorEventListene
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        startButton = (Button) findViewById (R.id.StartStreaming);
-        stopButton = (Button) findViewById (R.id.StopStreaming);
+        startButton = findViewById (R.id.StartStreaming);
+        stopButton = findViewById (R.id.StopStreaming);
 
-        ipAddr = (TextView) findViewById(R.id.ipAddr);
+        ipAddr = findViewById(R.id.ipAddr);
 
-        unixTimeText = (TextView) findViewById(R.id.unixTime);
+        unixTimeText = findViewById(R.id.unixTime);
 
         startButton.setOnClickListener(startListener);
         stopButton.setOnClickListener(stopListener);
@@ -136,38 +131,44 @@ public class MainActivity extends WearableActivity implements SensorEventListene
         mSensorManager = (SensorManager) this.getSystemService(Context.SENSOR_SERVICE);
 
         // setup and register various sensors
-        mSensors.put("acce", mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER));
-        mSensors.put("gyro", mSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE));
-        mSensors.put("rotvec", mSensorManager.getDefaultSensor((Sensor.TYPE_ROTATION_VECTOR)));
-        mSensors.put("mag", mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD));
+//        mSensors.put("accel", mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER));
+//        mSensors.put("gyro", mSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE));
+//        mSensors.put("rotvec", mSensorManager.getDefaultSensor((Sensor.TYPE_ROTATION_VECTOR)));
+//        mSensors.put("mag", mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD));
 
         // Used to get all the available microphone sampling rates
         // getSamplingRates();
     }
 
-    public void registerSensors() {
-        for (Sensor eachSensor : mSensors.values()) {
-            mSensorManager.registerListener((SensorEventListener) this, eachSensor, SensorManager.SENSOR_DELAY_FASTEST);
-        }
-    }
+//    public void registerSensors() {
+//        for (Sensor eachSensor : mSensors.values()) {
+//            mSensorManager.registerListener(this, eachSensor, SensorManager.SENSOR_DELAY_FASTEST);
+//        }
+//    }
+//
+//    public void unregisterSensors() {
+//        for (Sensor eachSensor : mSensors.values()) {
+//            mSensorManager.unregisterListener(this, eachSensor);
+//        }
+//    }
 
-    public void unregisterSensors() {
-        for (Sensor eachSensor : mSensors.values()) {
-            mSensorManager.unregisterListener((SensorEventListener) this, eachSensor);
-        }
-    }
     private final View.OnClickListener stopListener = new View.OnClickListener() {
 
         @Override
         public void onClick(View arg0) {
-            status = false;
-            link.off();
+//            status = false;
+//            停止获取 IMU 数据
+            imuListen.stopRead();
+//            停止获取音频数据
             audioListen.stopRead();
+//            注销 IMU 监听
+            imuListen.off();
+//            注销音频监听
             audioListen.off();
-//            socket.close();
-//            mIsRecording.set(false);
+//            关闭数据传输
+            link.off();
             Log.d("VS","Recorder released");
-            unregisterSensors();
+//            unregisterSensors();
         }
 
     };
@@ -176,29 +177,58 @@ public class MainActivity extends WearableActivity implements SensorEventListene
 
         @Override
         public void onClick(View arg0) {
-            status = true;
             SERVER = ipAddr.getText().toString();
             try {
                 link.launch(InetAddress.getByName(SERVER), port);
+
+//                这里后面变成远程设置
+                int[] sensors = new int[] {
+                        Sensor.TYPE_ACCELEROMETER,
+                        Sensor.TYPE_GYROSCOPE,
+                        Sensor.TYPE_ROTATION_VECTOR,
+                        Sensor.TYPE_MAGNETIC_FIELD
+                };
+//                启动相关组件
+                imuListen.launch(mSensorManager, sensors,0 ,MainActivity.this);
                 audioListen.launch(audioSamplingRate, MainActivity.this);
             } catch (UnknownHostException e) {
                 Log.e("VS", "UnknownHostException", e);
                 return;
             }
-            registerSensors();
-//            startStreaming();
+//            registerSensors();
+//            开始读取数据
+            imuListen.startRead();
             audioListen.startRead();
         }
 
     };
 
+    /**
+     * 音频回调函数
+     * */
     @Override
     public void dealAudioData(byte[] data) {
-        String audio_encoded = System.currentTimeMillis() + ",audio," + Base64.getEncoder().encodeToString(data);
-        byte[] audio_buf = audio_encoded.getBytes(StandardCharsets.UTF_8);
+        AudioData audioData = new AudioData(System.currentTimeMillis(), data);
+        String json = gson.toJson(audioData);
+        byte[] buf = json.getBytes(StandardCharsets.UTF_8);
         // 发送数据
-        link.send(audio_buf);
-        System.out.println("MinBufferSize: " +minBufSize + " ,new buff size " + audio_buf.length);
+        link.send(buf);
+//        System.out.println("MinBufferSize: " +minBufSize + " ,new buff size " + audio_buf.length);
+    }
+
+    /**
+     * IMU 回调函数
+     * */
+    public void dealIMUData(String type, float[] data, long sensorTimestamp) {
+        Thread streamThread = new Thread(() -> {
+            long unixTimestamp = System.currentTimeMillis();
+            IMUData imuData = new IMUData(unixTimestamp, sensorTimestamp, type, data);
+            String json = gson.toJson(imuData);
+            byte []buf = json.getBytes(StandardCharsets.UTF_8);
+
+            link.send(buf);
+        });
+        streamThread.start();
     }
 
     private void wakeLockAcquire(){
@@ -222,95 +252,95 @@ public class MainActivity extends WearableActivity implements SensorEventListene
         }
     }
 
-    private void sendSensorValues(String type, long sensorTimestamp, long unixTimestamp, float[] values) throws IOException {
+//    private void sendSensorValues(String type, long sensorTimestamp, long unixTimestamp, float[] values) throws IOException {
+//
+//        Thread streamThread = new Thread(new Runnable() {
+//
+//            @Override
+//            public void run() {
+//                // inputs are a float of values
+//                long unixTime = System.currentTimeMillis();
+//                String unixString = String.valueOf(unixTime) + ",";
+//                Log.d("UVM", unixString);
+//                runOnUiThread(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        // Stuff that updates the UI
+//                        unixTimeText.setText(unixString);
+//
+//                    }
+//                });
+//                StringBuilder to_send = new StringBuilder(unixString + type + "," + String.valueOf(sensorTimestamp) + "," + String.valueOf(unixTimestamp) + ",");
+//                for (int i = 0; i < values.length; i++) {
+//                    if (i < values.length - 1) {
+//                        to_send.append(String.valueOf(values[i])).append(",");
+//                    } else {
+//                        to_send.append(String.valueOf(values[i]));
+//                    }
+//                }
+//
+//                byte[] buf = to_send.toString().getBytes(StandardCharsets.UTF_8);
+//                final InetAddress destination;
+//                try {
+//                    destination = InetAddress.getByName(SERVER);
+//                    link.send(buf);
+//                Log.d("VM", "Sending data");
+//                } catch (UnknownHostException e) {
+//                    e.printStackTrace();//
+//                }
+//            }
+//        });
+//        streamThread.start();
+//    }
 
-        Thread streamThread = new Thread(new Runnable() {
-
-            @Override
-            public void run() {
-                // inputs are a float of values
-                long unixTime = System.currentTimeMillis();
-//                        to_send.put("unixTime_send", unixTime);
-                String unixString = String.valueOf(unixTime) + ",";
-                Log.d("UVM", unixString);
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        // Stuff that updates the UI
-                        unixTimeText.setText(unixString);
-
-                    }
-                });
-                StringBuilder to_send = new StringBuilder(unixString + type + "," + String.valueOf(sensorTimestamp) + "," + String.valueOf(unixTimestamp) + ",");
-                for (int i = 0; i < values.length; i++) {
-                    if (i < values.length - 1) {
-                        to_send.append(String.valueOf(values[i])).append(",");
-                    } else {
-                        to_send.append(String.valueOf(values[i]));
-                    }
-                }
-
-                byte[] buf = to_send.toString().getBytes(StandardCharsets.UTF_8);
-                final InetAddress destination;
-                try {
-                    destination = InetAddress.getByName(SERVER);
-                    link.send(buf);
-                Log.d("VM", "Sending data");
-                } catch (UnknownHostException e) {
-                    e.printStackTrace();//
-                }
-            }
-        });
-        streamThread.start();
-    }
-    @Override
-    public void onSensorChanged(final SensorEvent sensorEvent) {
+//    @Override
+//    public void onSensorChanged(final SensorEvent sensorEvent) {
 
         // update each sensor measurements
         // NOTE: This is the place to change the timestamp to unix if we want to
-        long sensorTimestamp = sensorEvent.timestamp;
-        long unixTimestamp = System.currentTimeMillis();
+//        long sensorTimestamp = sensorEvent.timestamp;
+//        long unixTimestamp = System.currentTimeMillis();
+//
+//        Sensor eachSensor = sensorEvent.sensor;
+//        switch (eachSensor.getType()) {
+//            case Sensor.TYPE_ACCELEROMETER:
+//                try {
+//                    sendSensorValues("acce", sensorTimestamp, unixTimestamp, sensorEvent.values);
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+//                break;
+//
+//            case Sensor.TYPE_GYROSCOPE:
+//                try {
+//                    sendSensorValues("gyro", sensorTimestamp, unixTimestamp, sensorEvent.values);
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+//                break;
+//
+//            case Sensor.TYPE_MAGNETIC_FIELD:
+//                try {
+//                    sendSensorValues("mag", sensorTimestamp, unixTimestamp, sensorEvent.values);
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+//                break;
+//
+//            case Sensor.TYPE_ROTATION_VECTOR:
+//                try {
+//                    sendSensorValues("rotvec", sensorTimestamp, unixTimestamp, sensorEvent.values);
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+//                break;
+//        }
+//    }
 
-        Sensor eachSensor = sensorEvent.sensor;
-        switch (eachSensor.getType()) {
-            case Sensor.TYPE_ACCELEROMETER:
-                try {
-                    sendSensorValues("acce", sensorTimestamp, unixTimestamp, sensorEvent.values);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                break;
-
-            case Sensor.TYPE_GYROSCOPE:
-                try {
-                    sendSensorValues("gyro", sensorTimestamp, unixTimestamp, sensorEvent.values);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                break;
-
-            case Sensor.TYPE_MAGNETIC_FIELD:
-                try {
-                    sendSensorValues("mag", sensorTimestamp, unixTimestamp, sensorEvent.values);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                break;
-
-            case Sensor.TYPE_ROTATION_VECTOR:
-                try {
-                    sendSensorValues("rotvec", sensorTimestamp, unixTimestamp, sensorEvent.values);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                break;
-        }
-    }
-
-    @Override
-    public void onAccuracyChanged(Sensor sensor, int accuracy) {
-
-    }
+//    @Override
+//    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+//
+//    }
 
     public void getSamplingRates(){
         for (int rate : new int[] {125, 250, 500, 1000, 2000, 4000, 8000, 11025, 16000, 22050, 44100}) {  // add the rates you wish to check against
