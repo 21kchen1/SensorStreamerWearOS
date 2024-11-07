@@ -1,4 +1,4 @@
-package com.SensorStreamer.Listen;
+package com.SensorStreamer.Component.Listen;
 
 /**
  * Listen 抽象工厂
