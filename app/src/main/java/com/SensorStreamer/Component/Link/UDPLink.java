@@ -15,7 +15,7 @@ import java.net.SocketException;
  * */
 
 /**
- * @// TODO: 2024/11/8 rece_socket 开发，实现接收数据1
+ * @// TODO: 2024/11/8 rece_socket 开发，实现接收数据
  * */
 public class UDPLink extends Link {
 //    发送和接收数据的 socket
