@@ -9,6 +9,19 @@ import android.hardware.SensorEventListener;
  * */
 
 public abstract class Listen implements SensorEventListener {
+    protected boolean launchFlag, startFlag;
+
+    /**
+     * 设置启动和开始标志
+     * 0 0 launch
+     * 1 0 off, start
+     * 1 1 stop
+     * 0 1 error
+     * */
+    public Listen() {
+        this.launchFlag = this.startFlag = false;
+    }
+
     /**
      * 启动组件
      * @param params 参数列表

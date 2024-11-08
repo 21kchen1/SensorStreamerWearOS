@@ -38,13 +38,13 @@ public class IMUListen extends Listen {
     private int samplingRate;
 //    需要监听的 sensor
     private Sensor[] sensors;
-//    防止重复组成
-    private boolean register;
 
     /**
      * 常量初始化
      * */
     public IMUListen() {
+        super();
+
         this.sensorDir = new HashMap<>();
         this.sensorDir.put(Sensor.TYPE_ACCELEROMETER, "accel");
         this.sensorDir.put(Sensor.TYPE_GYROSCOPE, "gyro");
@@ -52,7 +52,6 @@ public class IMUListen extends Listen {
         this.sensorDir.put(Sensor.TYPE_MAGNETIC_FIELD, "mag");
 
         this.samplingRate = this.intNull = -1;
-        this.register = false;
     }
 
     /**
@@ -63,6 +62,10 @@ public class IMUListen extends Listen {
      * @param callback 数据处理回调函数
      * */
     public boolean launch(SensorManager imuManager, int[] sensors, int samplingRate, IMUCallback callback) {
+//        0 0
+        if (this.launchFlag || this.startFlag)
+            return false;
+
         String[] params = new String[sensors.length + 1];
 //        将类型转换为字符串参数
         for (int i = 0; i < sensors.length; i++) {
@@ -72,6 +75,7 @@ public class IMUListen extends Listen {
 
         this.setIMUManager(imuManager);
         this.setCallback(callback);
+
         return this.launch(params);
     }
 
@@ -96,10 +100,11 @@ public class IMUListen extends Listen {
      * */
     @Override
     public boolean launch(String[] params) {
-        if (this.imuManager == null || this.sensors != null || samplingRate != intNull)
+//        0 0
+        if (this.launchFlag || this.startFlag)
             return false;
 
-        if (params.length < 2 || params.length > 5 || !TypeTranDeter.isStr2Num(params[params.length - 1]) || Integer.parseInt(params[params.length - 1]) < 0)
+        if (this.imuManager == null || params.length < 2 || params.length > 5 || !TypeTranDeter.isStr2Num(params[params.length - 1]) || Integer.parseInt(params[params.length - 1]) < 0)
             return false;
 
         this.samplingRate = Integer.parseInt(params[params.length - 1]);
@@ -115,7 +120,9 @@ public class IMUListen extends Listen {
             int type = Integer.parseInt(params[i]);
             this.sensors[i] = this.imuManager.getDefaultSensor(type);
         }
-        return true;
+
+//        1 0
+        return this.launchFlag = true;
     }
 
     /**
@@ -124,33 +131,38 @@ public class IMUListen extends Listen {
      * */
     @Override
     public boolean off() {
-//        需要先注销监视器
-        if (register || this.samplingRate == this.intNull && this.sensors == null) {
+//        1 0
+        if (!this.launchFlag || this.startFlag)
             return false;
-        }
 
         this.samplingRate = this.intNull;
         this.imuManager = null;
         this.sensors = null;
+        this.callback = null;
+
+//        0 0
+        this.launchFlag = false;
         return true;
     }
 
     /**
      * 读取并使用回调函数处理 IMU 数据
      * 仅当采样率为零时启动 onSensorChanged
-     * @// TODO: 2024/11/7 还需要添加按采样率发送数据的程序
+     * @// TODO: 2024/11/7 还需要添加按采样率发送数据的程序，需要设置buf和大小
      * */
     @Override
     public void startRead() {
-        if (this.register || this.samplingRate == this.intNull || this.sensors == null)
+//        1 0
+        if (!this.launchFlag || this.startFlag)
             return;
 
 //        注册对应的监听
         for (Sensor sensor : this.sensors) {
             this.imuManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_FASTEST);
         }
-        this.register = true;
 
+//        1 1
+        this.startFlag = true;
     }
 
     /**
@@ -159,13 +171,17 @@ public class IMUListen extends Listen {
      * */
     @Override
     public void stopRead() {
-        if(!this.register)
+//        1 1
+        if (!this.launchFlag || !this.startFlag)
             return;
+
 //        注销对应的监听
         for (Sensor sensor : this.sensors) {
             this.imuManager.unregisterListener(this, sensor);
         }
-        this.register = false;
+
+//        1 0
+        this.startFlag = false;
     }
 
     /**
@@ -173,7 +189,8 @@ public class IMUListen extends Listen {
      * */
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
-        if (this.samplingRate > 0 || this.samplingRate == this.intNull)
+//        1 1
+        if (this.samplingRate > 0 || !this.startFlag)
             return;
 
         if (callback == null)

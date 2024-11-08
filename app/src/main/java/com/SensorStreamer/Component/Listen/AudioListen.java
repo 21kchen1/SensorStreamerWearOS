@@ -26,10 +26,24 @@ public class AudioListen extends Listen {
         void dealAudioData(byte[] data);
     }
 
+    private final int intNull;
+//    回调函数
     private AudioCallback callback;
+//    音频记录
     private AudioRecord audioRecord;
+//    最小缓存大小
     private int minBufSize;
+//    开始线程
     private Thread readThread;
+
+    /**
+     * 常量初始化
+     * */
+    public AudioListen() {
+        super();
+
+        this.intNull = 0;
+    }
 
     /**
      * 启动组件并设置回调函数 适配器
@@ -37,9 +51,14 @@ public class AudioListen extends Listen {
      * @param callback 数据处理回调函数
      * */
     public boolean launch(int samplingRate, AudioCallback callback) {
+//        0 0
+        if (this.launchFlag || this.startFlag)
+            return false;
+
         String[] params = new String[1];
         params[0] = Integer.toString(samplingRate);
         this.setCallback(callback);
+
         return this.launch(params);
     }
 
@@ -56,7 +75,8 @@ public class AudioListen extends Listen {
      * */
     @Override
     public boolean launch(String[] params) {
-        if (audioRecord != null || minBufSize != 0)
+//        0 0
+        if (this.launchFlag || this.startFlag)
             return false;
 
         if (params.length != 1 || !TypeTranDeter.isStr2Num(params[0]) || Integer.parseInt(params[0]) <= 0)
@@ -68,7 +88,8 @@ public class AudioListen extends Listen {
         this.audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC, samplingRate, AudioFormat.CHANNEL_IN_MONO,
                 AudioFormat.ENCODING_PCM_16BIT, minBufSize * 10);
 
-        return true;
+//        1 0
+        return this.launchFlag = true;
     }
 
     /**
@@ -76,14 +97,19 @@ public class AudioListen extends Listen {
      * */
     @Override
     public boolean off() {
-        if (this.audioRecord == null)
+//        1 0
+        if (!this.launchFlag || this.startFlag)
             return false;
+
         this.audioRecord.stop();
         this.audioRecord.release();
         this.audioRecord = null;
 
         this.callback = null;
-        this.minBufSize = 0;
+        this.minBufSize = this.intNull;
+
+//        0 0
+        this.launchFlag = false;
         return true;
     }
 
@@ -106,10 +132,15 @@ public class AudioListen extends Listen {
      * */
     @Override
     public void startRead() {
-        if (audioRecord == null || readThread != null)
+//        1 0
+        if (!this.launchFlag || this.startFlag)
             return;
+
         readThread = new Thread(this::readAudio);
         readThread.start();
+
+//        1 1
+        this.startFlag = true;
     }
 
     /**
@@ -117,10 +148,15 @@ public class AudioListen extends Listen {
      * */
     @Override
     public void stopRead() {
-        if (readThread == null)
+//        1 1
+        if (!this.launchFlag || !this.startFlag)
             return;
+
         readThread.interrupt();
         readThread = null;
+
+//        1 0
+        this.startFlag = false;
     }
 
     @Override

@@ -14,62 +14,88 @@ import java.net.SocketException;
  * @version 1.0
  * */
 
+/**
+ * @// TODO: 2024/11/8 rece_socket 开发，实现接收数据
+ * */
 public class UDPLink extends Link {
-    private DatagramSocket socket;
+//    发送和接收数据的 socket
+    private DatagramSocket send_socket, rece_socket;
     private InetAddress address;
     private int port;
 
     UDPLink () {
+        super();
     }
 
+    /**
+     * 注册所有可变成员变量，设置目的地址
+     * */
     @Override
     public boolean launch(InetAddress address, int port) {
-        if (this.socket != null && !this.socket.isClosed()) {
+//        0
+        if (this.launchFlag)
             return false;
-        }
 
         try {
             this.address = address;
             this.port = port;
-            this.socket = new DatagramSocket();
+            this.send_socket = new DatagramSocket();
         } catch (SocketException e) {
             Log.d("UDPLinker", "SocketException", e);
             this.off();
             return false;
         }
-        return true;
+
+//        1
+        return this.launchFlag = true;
     }
 
+    /**
+     * 注销所有可变成员变量
+     * */
     @Override
     public boolean off() {
-        if (this.socket == null || this.socket.isClosed()) {
+//        1
+        if (!this.launchFlag)
             return false;
-        }
-        this.socket.close();
+
+        this.send_socket.close();
+        this.send_socket = null;
+
+//        0
+        this.launchFlag = false;
         return true;
     }
 
+    /**
+     * 发送 buf 数据
+     * */
     @Override
     public void send(byte[] buf) {
-        if (this.socket == null)
+//        1
+        if (!this.launchFlag)
             return;
 
         try {
-            DatagramPacket packet = new DatagramPacket(buf, buf.length, address, port);
-            this.socket.send(packet);
+            DatagramPacket packet = new DatagramPacket(buf, buf.length, this.address, this.port);
+            this.send_socket.send(packet);
         } catch (IOException e) {
             Log.e("UDPLinker.send", "IOException", e);
         }
     }
 
+    /**
+     * 接收并将数据存储在 buf
+     * */
     @Override
     public void rece(byte[] buf) {
-        if (this.socket == null)
+//        1
+        if (!this.launchFlag)
             return;
 
         try {
-            DatagramPacket packet = new DatagramPacket(buf, buf.length, address, port);
-            this.socket.receive(packet);
+            DatagramPacket packet = new DatagramPacket(buf, buf.length);
+            this.send_socket.receive(packet);
         } catch (IOException e) {
             Log.e("UDPLinker.rece", "IOException", e);
         }

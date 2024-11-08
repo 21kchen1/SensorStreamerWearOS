@@ -9,6 +9,16 @@ import java.net.InetAddress;
  * */
 
 public abstract class Link {
+    protected boolean launchFlag;
+
+    /**
+     * 设置启动标志
+     * 0 launch
+     * 1 off
+     * */
+    public Link() {
+        this.launchFlag = false;
+    }
     /**
      * 注册并启动组件
      * @param address 目的地址
