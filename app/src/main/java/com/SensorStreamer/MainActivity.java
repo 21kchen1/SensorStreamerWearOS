@@ -207,6 +207,8 @@ public class MainActivity extends WearableActivity {
         Thread testTread = new Thread(() -> {
             String msg = "Hello!";
             tcpLink.send(msg, StandardCharsets.UTF_8);
+            msg = tcpLink.rece(StandardCharsets.UTF_8, 0);
+            System.out.println(msg);
         });
         testTread.start();
     }
@@ -214,21 +216,23 @@ public class MainActivity extends WearableActivity {
     private final View.OnClickListener startListener = new View.OnClickListener() {
         @Override
         public void onClick(View arg0) {
-            try {
-                String SERVER = ipAddr.getText().toString();
-                udpLink.launch(InetAddress.getByName(SERVER), udpPort);
-                tcpLink.launch(InetAddress.getByName(SERVER), tcpPort);
-                MainActivity.this.launchSensor();
-                MainActivity.this.test();
+            new Thread(() -> {
+                try {
+                    String SERVER = ipAddr.getText().toString();
+                    udpLink.launch(InetAddress.getByName(SERVER), udpPort);
+                    tcpLink.launch(InetAddress.getByName(SERVER), tcpPort);
+                    MainActivity.this.launchSensor();
+                    MainActivity.this.test();
 
-//                ui 更新
-                if (refreshUIService != null)
-                    return;
-                refreshUIService = Executors.newSingleThreadScheduledExecutor();
-                refreshUIService.scheduleWithFixedDelay(MainActivity.this::refreshUI, 0, 500, TimeUnit.MILLISECONDS);
-            } catch (UnknownHostException e) {
-                Log.e("VS", "UnknownHostException", e);
-            }
+    //                ui 更新
+                    if (refreshUIService != null && !refreshUIService.isShutdown())
+                        return;
+                    refreshUIService = Executors.newSingleThreadScheduledExecutor();
+                    refreshUIService.scheduleWithFixedDelay(MainActivity.this::refreshUI, 0, 500, TimeUnit.MILLISECONDS);
+                } catch (UnknownHostException e) {
+                    Log.e("VS", "UnknownHostException", e);
+                }
+            }).start();
         }
     };
 
@@ -237,8 +241,11 @@ public class MainActivity extends WearableActivity {
         public void onClick(View arg0) {
             MainActivity.this.offSensor();
 
+            udpLink.off();
+            tcpLink.off();
+            if (refreshUIService == null)
+                return;
             refreshUIService.shutdown();
-            refreshUIService = null;
             Log.d("VS","Recorder released");
         }
     };

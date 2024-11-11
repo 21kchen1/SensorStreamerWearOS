@@ -63,7 +63,8 @@ public class TCPLink extends Link {
             return false;
 
         try {
-            this.socket.close();
+            if (this.socket != null)
+                this.socket.close();
             this.socket = null;
 
             this.address = null;
