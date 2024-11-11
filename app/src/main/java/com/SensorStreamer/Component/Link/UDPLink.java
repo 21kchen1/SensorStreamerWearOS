@@ -7,24 +7,23 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.nio.charset.Charset;
 
 /**
  * 基于 UDP 的 Link
  * @author chen
- * @version 1.0
+ * @version 1.1
  * */
 
-/**
- * @// TODO: 2024/11/8 rece_socket 开发，实现接收数据
- * */
 public class UDPLink extends Link {
+    private final int intNull;
 //    发送和接收数据的 socket
     private DatagramSocket send_socket, rece_socket;
-    private InetAddress address;
-    private int port;
 
-    UDPLink () {
+    public UDPLink () {
         super();
+
+        intNull = 0;
     }
 
     /**
@@ -39,9 +38,13 @@ public class UDPLink extends Link {
         try {
             this.address = address;
             this.port = port;
+//            发送用初始化
             this.send_socket = new DatagramSocket();
+//            接收用初始化 固定接收对应地址端口的信息
+            this.rece_socket = new DatagramSocket(this.port);
         } catch (SocketException e) {
-            Log.d("UDPLinker", "SocketException", e);
+            Log.d("UDPLink", "launch:SocketException", e);
+            this.launchFlag = true;
             this.off();
             return false;
         }
@@ -62,6 +65,12 @@ public class UDPLink extends Link {
         this.send_socket.close();
         this.send_socket = null;
 
+        this.rece_socket.close();
+        this.rece_socket = null;
+
+        this.address = null;
+        this.port = this.intNull;
+
 //        0
         this.launchFlag = false;
         return true;
@@ -71,16 +80,17 @@ public class UDPLink extends Link {
      * 发送 buf 数据
      * */
     @Override
-    public void send(byte[] buf) {
+    public void send(String msg, Charset charset) {
 //        1
         if (!this.launchFlag)
             return;
 
         try {
+            byte[] buf = msg.getBytes(charset);
             DatagramPacket packet = new DatagramPacket(buf, buf.length, this.address, this.port);
             this.send_socket.send(packet);
         } catch (IOException e) {
-            Log.e("UDPLinker.send", "IOException", e);
+            Log.e("UDPLink", "send:IOException", e);
         }
     }
 
@@ -88,16 +98,20 @@ public class UDPLink extends Link {
      * 接收并将数据存储在 buf
      * */
     @Override
-    public void rece(byte[] buf) {
+    public String rece(Charset charset, int bufSize) {
 //        1
         if (!this.launchFlag)
-            return;
+            return null;
 
         try {
+            byte[] buf = new byte[bufSize];
             DatagramPacket packet = new DatagramPacket(buf, buf.length);
-            this.send_socket.receive(packet);
+            this.rece_socket.receive(packet);
+
+            return new String(buf, charset);
         } catch (IOException e) {
-            Log.e("UDPLinker.rece", "IOException", e);
+            Log.e("UDPLink", "rece:IOException", e);
+            return null;
         }
     }
 }

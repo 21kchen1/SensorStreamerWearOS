@@ -114,6 +114,7 @@ public class IMUListen extends Listen {
         for (int i = 0; i < params.length - 1; i++) {
 //            是否存在于字典中 判断是否有效
             if (!TypeTranDeter.isStr2Num(params[i]) || !this.sensorDir.containsKey(Integer.parseInt(params[i]))) {
+                this.launchFlag = true;
                 this.off();
                 return false;
             }

@@ -31,14 +31,13 @@ import com.google.gson.Gson;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @// TODO: 2024/11/8 变量 unixTimeText 用于后续更新 ui
  * @// TODO: 2024/11/9 记得发送的sock和接收的sock要分开，防止塞车，发送的可以多整几个
  * */
-public class MainActivity extends WearableActivity implements AudioListen.AudioCallback, IMUListen.IMUCallback {
+public class MainActivity extends WearableActivity {
 
     private static final String LOG_TAG = "log tag";
     private Button startButton,stopButton;
@@ -58,7 +57,7 @@ public class MainActivity extends WearableActivity implements AudioListen.AudioC
 
 //    创建 Link 类
     UDPLinkF udpLinkF = new UDPLinkF();
-    final private Link link = udpLinkF.create();
+    final private Link audioLink = udpLinkF.create();
 
     AudioListenF audioListenF = new AudioListenF();
     final private AudioListen audioListen = (AudioListen) audioListenF.create();
@@ -148,7 +147,7 @@ public class MainActivity extends WearableActivity implements AudioListen.AudioC
 //            注销音频监听
             audioListen.off();
 //            关闭数据传输
-            link.off();
+            audioLink.off();
             Log.d("VS","Recorder released");
         }
 
@@ -158,30 +157,58 @@ public class MainActivity extends WearableActivity implements AudioListen.AudioC
 
         @Override
         public void onClick(View arg0) {
-            MainActivity.this.launchSensor();
-//            MainActivity.this.test();
+            try {
+                SERVER = ipAddr.getText().toString();
+                audioLink.launch(InetAddress.getByName(SERVER), port);
+                MainActivity.this.launchSensor();
+//              MainActivity.this.test();
+            } catch (UnknownHostException e) {
+                Log.e("VS", "UnknownHostException", e);
+            }
+        }
+    };
+
+    /**
+     * 音频回调函数
+     * */
+    private final AudioListen.AudioCallback audioCallback = new AudioListen.AudioCallback () {
+        @Override
+        public void dealAudioData(byte[] data) {
+            AudioData audioData = new AudioData(System.currentTimeMillis(), data);
+            String json = gson.toJson(audioData);
+            //        发送数据
+            audioLink.send(json, StandardCharsets.UTF_8);
+        }
+    };
+
+    /**
+     * IMU 回调函数
+     * */
+    private final IMUListen.IMUCallback imuCallback = new IMUListen.IMUCallback() {
+        @Override
+        public void dealIMUData(String type, float[] data, long sensorTimestamp) {
+            Thread streamThread = new Thread(() -> {
+                long unixTimestamp = System.currentTimeMillis();
+                IMUData imuData = new IMUData(unixTimestamp, sensorTimestamp, type, data);
+                String json = gson.toJson(imuData);
+//            发送数据
+                audioLink.send(json, StandardCharsets.UTF_8);
+            });
+            streamThread.start();
         }
     };
 
     public void launchSensor() {
-        SERVER = ipAddr.getText().toString();
-        try {
-            link.launch(InetAddress.getByName(SERVER), port);
-
 //                这里后面变成远程设置
-            int[] sensors = new int[] {
-                    Sensor.TYPE_ACCELEROMETER,
-                    Sensor.TYPE_GYROSCOPE,
-                    Sensor.TYPE_ROTATION_VECTOR,
-                    Sensor.TYPE_MAGNETIC_FIELD
-            };
+        int[] sensors = new int[] {
+                Sensor.TYPE_ACCELEROMETER,
+                Sensor.TYPE_GYROSCOPE,
+                Sensor.TYPE_ROTATION_VECTOR,
+                Sensor.TYPE_MAGNETIC_FIELD
+        };
 //                启动相关组件
-            imuListen.launch(mSensorManager, sensors,0 ,MainActivity.this);
-            audioListen.launch(audioSamplingRate, MainActivity.this);
-        } catch (UnknownHostException e) {
-            Log.e("VS", "UnknownHostException", e);
-            return;
-        }
+        imuListen.launch(mSensorManager, sensors,0 ,this.imuCallback);
+        audioListen.launch(audioSamplingRate, this.audioCallback);
 //            开始读取数据
         imuListen.startRead();
         audioListen.startRead();
@@ -189,45 +216,15 @@ public class MainActivity extends WearableActivity implements AudioListen.AudioC
 
     public void test() {
         Thread testTread = new Thread(() -> {
-            try {
-                byte[] buf = new byte[10240];
-                link.launch(InetAddress.getByName(SERVER), this.port);
-                link.rece(buf);
-                System.out.println(Arrays.toString(buf));
-            } catch (UnknownHostException e) {
-                Log.e("VS", "UnknownHostException", e);
-                return;
-            }
+
+            String msg = audioLink.rece(StandardCharsets.UTF_8, 64);
+            System.out.println(msg);
+
         });
         testTread.start();
     }
 
-    /**
-     * 音频回调函数
-     * */
-    @Override
-    public void dealAudioData(byte[] data) {
-        AudioData audioData = new AudioData(System.currentTimeMillis(), data);
-        String json = gson.toJson(audioData);
-        byte[] buf = json.getBytes(StandardCharsets.UTF_8);
-        // 发送数据
-        link.send(buf);
-    }
 
-    /**
-     * IMU 回调函数
-     * */
-    public void dealIMUData(String type, float[] data, long sensorTimestamp) {
-        Thread streamThread = new Thread(() -> {
-            long unixTimestamp = System.currentTimeMillis();
-            IMUData imuData = new IMUData(unixTimestamp, sensorTimestamp, type, data);
-            String json = gson.toJson(imuData);
-            byte []buf = json.getBytes(StandardCharsets.UTF_8);
-
-            link.send(buf);
-        });
-        streamThread.start();
-    }
 
     private void wakeLockAcquire(){
         if (mWakeLock != null){
