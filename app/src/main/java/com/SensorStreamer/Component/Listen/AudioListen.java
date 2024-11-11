@@ -136,8 +136,8 @@ public class AudioListen extends Listen {
         if (!this.launchFlag || this.startFlag)
             return;
 
-        readThread = new Thread(this::readAudio);
-        readThread.start();
+        this.readThread = new Thread(this::readAudio);
+        this.readThread.start();
 
 //        1 1
         this.startFlag = true;
@@ -152,8 +152,7 @@ public class AudioListen extends Listen {
         if (!this.launchFlag || !this.startFlag)
             return;
 
-        readThread.interrupt();
-        readThread = null;
+        this.readThread.interrupt();
 
 //        1 0
         this.startFlag = false;

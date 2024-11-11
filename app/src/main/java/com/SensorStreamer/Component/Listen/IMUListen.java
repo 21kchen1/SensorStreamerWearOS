@@ -194,10 +194,15 @@ public class IMUListen extends Listen {
         if (this.samplingRate > 0 || !this.startFlag)
             return;
 
-        if (callback == null)
-            return;
-//        使用字典将 type 转换为 String
-        callback.dealIMUData(this.sensorDir.get(sensorEvent.sensor.getType()), sensorEvent.values, sensorEvent.timestamp);
+        Thread readChangedThread = new Thread(() -> {
+                if (this.callback == null) {
+                    return;
+                }
+//                使用字典将 type 转换为 String
+                this.callback.dealIMUData(this.sensorDir.get(sensorEvent.sensor.getType()), sensorEvent.values, sensorEvent.timestamp);
+            }
+        );
+        readChangedThread.start();
     }
 
     @Override

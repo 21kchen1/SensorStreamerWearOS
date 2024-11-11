@@ -14,6 +14,10 @@ public abstract class Link {
     protected boolean launchFlag;
     protected InetAddress address;
     protected int port;
+//    缓存最值
+    protected final int maxBufSize, minBufSize;
+//    自适应缓存大小
+    protected int bufSize;
 
     /**
      * 设置启动标志
@@ -22,6 +26,10 @@ public abstract class Link {
      * */
     public Link() {
         this.launchFlag = false;
+
+        this.maxBufSize = 65536;
+        this.minBufSize = 64;
+        this.bufSize = 1024;
     }
     /**
      * 注册并启动组件
@@ -48,4 +56,9 @@ public abstract class Link {
      * @return 数据
      * */
     public abstract String rece(Charset charset, int bufSize);
+    /**
+     * 自适应缓冲大小设置
+     * @param packetSize 当前包大小
+     * */
+    protected abstract void adaptiveBufSize(int packetSize);
 }

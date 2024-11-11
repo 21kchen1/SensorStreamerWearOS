@@ -103,15 +103,36 @@ public class UDPLink extends Link {
         if (!this.launchFlag)
             return null;
 
+        if (bufSize <= this.intNull)
+            bufSize = this.bufSize;
+
         try {
             byte[] buf = new byte[bufSize];
             DatagramPacket packet = new DatagramPacket(buf, buf.length);
             this.rece_socket.receive(packet);
 
-            return new String(buf, charset);
+//            开始自适应
+            synchronized (this) {
+                this.adaptiveBufSize(packet.getLength());
+            }
+
+            return new String(packet.getData(), packet.getOffset(), packet.getLength(), charset);
         } catch (IOException e) {
             Log.e("UDPLink", "rece:IOException", e);
             return null;
         }
+    }
+
+    /**
+     * 自适应缓冲大小
+     * */
+    @Override
+    protected synchronized void adaptiveBufSize(int packetSize) {
+        if (packetSize > this.bufSize) {
+            this.bufSize = Math.min(this.maxBufSize, (this.bufSize << 1));
+            return;
+        }
+        if (packetSize < (this.bufSize >> 2))
+            this.bufSize = Math.max(this.minBufSize, (this.bufSize >> 1));
     }
 }
