@@ -35,9 +35,10 @@ public abstract class Link {
      * 注册并启动组件
      * @param address 目的地址
      * @param port 目的端口
+     * @param timeout 连接超时
      * @return 是否创建成功
      * */
-    public abstract boolean launch(InetAddress address, int port);
+    public abstract boolean launch(InetAddress address, int port, int timeout);
     /**
      * 注销并关闭组件
      * @return 是否注销成功

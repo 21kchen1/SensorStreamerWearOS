@@ -4,7 +4,6 @@ import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.hardware.Sensor;
-import android.hardware.SensorManager;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.os.Bundle;
@@ -18,6 +17,7 @@ import android.widget.TextView;
 import androidx.core.content.ContextCompat;
 
 import com.SensorStreamer.Component.Link.Link;
+import com.SensorStreamer.Component.Link.LinkF;
 import com.SensorStreamer.Component.Link.TCPLinkF;
 import com.SensorStreamer.Component.Link.UDPLinkF;
 import com.SensorStreamer.Component.Listen.AudioListen;
@@ -33,14 +33,13 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
-import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * @// TODO: 2024/11/8 变量 unixTimeText 用于后续更新 ui
+ * @// TODO: 2024/11/13 需要注意tcp连接的额外线程
  * */
 public class MainActivity extends WearableActivity {
 
@@ -57,21 +56,14 @@ public class MainActivity extends WearableActivity {
     // audio stuff
     int audioSamplingRate = 16000;
 
-    //    创建 Link 类
-    UDPLinkF udpLinkF = new UDPLinkF();
-    final private Link udpLink = udpLinkF.create();
-    TCPLinkF tcpLinkF = new TCPLinkF();
-    final private Link tcpLink = tcpLinkF.create();
+    private Link udpLink;
+    private Link tcpLink;
 
-    AudioListenF audioListenF = new AudioListenF();
-    final private AudioListen audioListen = (AudioListen) audioListenF.create();
-
-    IMUListenF imuListenF = new IMUListenF();
-    final private IMUListen imuListen = (IMUListen) imuListenF.create();
+    private AudioListen audioListen;
+    private IMUListen imuListen;
 
     private PowerManager.WakeLock mWakeLock;
     private PowerManager powerManager;
-    private SensorManager mSensorManager;
 
     private final static int REQUEST_CODE_ANDROID = 1001;
     private static final String[] REQUIRED_PERMISSIONS = new String[] {
@@ -132,8 +124,17 @@ public class MainActivity extends WearableActivity {
         wakeLockAcquire();
         setAmbientEnabled();
 
-        // sensor stuff
-        mSensorManager = (SensorManager) this.getSystemService(Context.SENSOR_SERVICE);
+        //    创建 Link 类
+        LinkF udpLinkF = new UDPLinkF();
+        udpLink = udpLinkF.create();
+        LinkF tcpLinkF = new TCPLinkF();
+        tcpLink = tcpLinkF.create();
+
+//        创建监听器
+        AudioListenF audioListenF = new AudioListenF();
+        audioListen = (AudioListen) audioListenF.create(this);
+        IMUListenF imuListenF = new IMUListenF();
+        imuListen = (IMUListen) imuListenF.create(this);
     }
 
     /**
@@ -185,7 +186,7 @@ public class MainActivity extends WearableActivity {
                 Sensor.TYPE_MAGNETIC_FIELD
         };
 //            启动相关组件
-        imuListen.launch(mSensorManager, sensors,0 ,this.imuCallback);
+        imuListen.launch(sensors,0 ,this.imuCallback);
         audioListen.launch(audioSamplingRate, this.audioCallback);
 //            开始读取数据
         imuListen.startRead();
@@ -216,22 +217,23 @@ public class MainActivity extends WearableActivity {
     private final View.OnClickListener startListener = new View.OnClickListener() {
         @Override
         public void onClick(View arg0) {
-            new Thread(() -> {
-                try {
-                    String SERVER = ipAddr.getText().toString();
-                    udpLink.launch(InetAddress.getByName(SERVER), udpPort);
-                    tcpLink.launch(InetAddress.getByName(SERVER), tcpPort);
-                    MainActivity.this.launchSensor();
-                    MainActivity.this.test();
+            try {
+                String SERVER = ipAddr.getText().toString();
+                udpLink.launch(InetAddress.getByName(SERVER), udpPort, 0);
+//
+                MainActivity.this.launchSensor();
+                MainActivity.this.test();
 
-    //                ui 更新
-                    if (refreshUIService != null && !refreshUIService.isShutdown())
-                        return;
-                    refreshUIService = Executors.newSingleThreadScheduledExecutor();
-                    refreshUIService.scheduleWithFixedDelay(MainActivity.this::refreshUI, 0, 500, TimeUnit.MILLISECONDS);
-                } catch (UnknownHostException e) {
-                    Log.e("VS", "UnknownHostException", e);
-                }
+//                ui 更新
+                if (refreshUIService != null && !refreshUIService.isShutdown())
+                    return;
+                refreshUIService = Executors.newSingleThreadScheduledExecutor();
+                refreshUIService.scheduleWithFixedDelay(MainActivity.this::refreshUI, 0, 500, TimeUnit.MILLISECONDS);
+            } catch (UnknownHostException e) {
+                Log.e("VS", "UnknownHostException", e);
+            }
+            new Thread(() -> {
+//                tcpLink.launch(InetAddress.getByName(SERVER), tcpPort, 2000);
             }).start();
         }
     };
@@ -242,7 +244,7 @@ public class MainActivity extends WearableActivity {
             MainActivity.this.offSensor();
 
             udpLink.off();
-            tcpLink.off();
+//            tcpLink.off();
             if (refreshUIService == null)
                 return;
             refreshUIService.shutdown();

@@ -8,6 +8,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -33,7 +34,7 @@ public class TCPLink extends Link {
      * 注册所有可变成员变量，设置目的地址
      * */
     @Override
-    public boolean launch(InetAddress address, int port) {
+    public boolean launch(InetAddress address, int port, int timeout) {
 //        0
         if (this.launchFlag)
             return false;
@@ -41,14 +42,14 @@ public class TCPLink extends Link {
         try {
             this.address = address;
             this.port = port;
-            this.socket = new Socket(this.address, this.port);
-        } catch (IOException e) {
-            Log.d("TCPLink", "launch:IOException", e);
+            this.socket = new Socket();
+            this.socket.connect(new InetSocketAddress(address, port), timeout);
+        } catch (Exception e) {
+            Log.d("TCPLink", "launch:Exception", e);
             this.launchFlag = true;
             this.off();
             return false;
         }
-
 //        1
         return this.launchFlag = true;
     }
@@ -63,14 +64,14 @@ public class TCPLink extends Link {
             return false;
 
         try {
-            if (this.socket != null)
+            if (this.socket != null && !this.socket.isClosed())
                 this.socket.close();
             this.socket = null;
 
             this.address = null;
             this.port = this.intNull;
-        } catch (IOException e) {
-            Log.d("TCPLink", "off:IOException", e);
+        } catch (Exception e) {
+            Log.d("TCPLink", "off:Exception", e);
             return false;
         }
 
@@ -92,8 +93,9 @@ public class TCPLink extends Link {
             OutputStreamWriter writer = new OutputStreamWriter(this.socket.getOutputStream(), charset);
             PrintWriter out = new PrintWriter(writer, true);
             out.println(msg);
-        } catch (IOException e) {
-            Log.e("TCPLink", "send:IOException", e);
+        } catch (Exception e) {
+            Log.e("TCPLink", "send:Exception", e);
+            this.off();
         }
     }
 
@@ -111,7 +113,8 @@ public class TCPLink extends Link {
             BufferedReader in = new BufferedReader(reader);
             return in.readLine();
         } catch (IOException e) {
-            Log.e("TCPLink", "rece:IOException", e);
+            Log.e("TCPLink", "rece:Exception", e);
+            this.off();
             return null;
         }
     }

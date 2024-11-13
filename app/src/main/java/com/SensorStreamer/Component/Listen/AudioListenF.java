@@ -1,5 +1,7 @@
 package com.SensorStreamer.Component.Listen;
 
+import android.app.Activity;
+
 /**
  * AudioListen 工厂
  * @author chen
@@ -8,7 +10,7 @@ package com.SensorStreamer.Component.Listen;
 
 public class AudioListenF extends ListenF {
     @Override
-    public Listen create() {
-        return new AudioListen();
+    public Listen create(Activity activity) {
+        return new AudioListen(activity);
     }
 }

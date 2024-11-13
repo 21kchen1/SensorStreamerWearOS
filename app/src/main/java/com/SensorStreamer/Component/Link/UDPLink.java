@@ -18,7 +18,7 @@ import java.nio.charset.Charset;
 public class UDPLink extends Link {
     private final int intNull;
 //    发送和接收数据的 socket
-    private DatagramSocket send_socket, rece_socket;
+    private DatagramSocket sendSocket, receSocket;
 
     public UDPLink () {
         super();
@@ -30,7 +30,7 @@ public class UDPLink extends Link {
      * 注册所有可变成员变量，设置目的地址
      * */
     @Override
-    public boolean launch(InetAddress address, int port) {
+    public boolean launch(InetAddress address, int port, int timeout) {
 //        0
         if (this.launchFlag)
             return false;
@@ -39,11 +39,11 @@ public class UDPLink extends Link {
             this.address = address;
             this.port = port;
 //            发送用初始化
-            this.send_socket = new DatagramSocket();
+            this.sendSocket = new DatagramSocket();
 //            接收用初始化 固定接收对应地址端口的信息
-            this.rece_socket = new DatagramSocket(this.port);
-        } catch (SocketException e) {
-            Log.d("UDPLink", "launch:SocketException", e);
+            this.receSocket = new DatagramSocket(this.port);
+        } catch (Exception e) {
+            Log.d("UDPLink", "launch:Exception", e);
             this.launchFlag = true;
             this.off();
             return false;
@@ -62,11 +62,13 @@ public class UDPLink extends Link {
         if (!this.launchFlag)
             return false;
 
-        this.send_socket.close();
-        this.send_socket = null;
+        if (this.sendSocket != null && !this.sendSocket.isClosed())
+            this.sendSocket.close();
+        this.sendSocket = null;
 
-        this.rece_socket.close();
-        this.rece_socket = null;
+        if (this.receSocket != null && !this.receSocket.isClosed())
+            this.receSocket.close();
+        this.receSocket = null;
 
         this.address = null;
         this.port = this.intNull;
@@ -88,9 +90,10 @@ public class UDPLink extends Link {
         try {
             byte[] buf = msg.getBytes(charset);
             DatagramPacket packet = new DatagramPacket(buf, buf.length, this.address, this.port);
-            this.send_socket.send(packet);
-        } catch (IOException e) {
-            Log.e("UDPLink", "send:IOException", e);
+            this.sendSocket.send(packet);
+        } catch (Exception e) {
+            Log.e("UDPLink", "send:Exception", e);
+            this.off();
         }
     }
 
@@ -109,7 +112,7 @@ public class UDPLink extends Link {
         try {
             byte[] buf = new byte[bufSize];
             DatagramPacket packet = new DatagramPacket(buf, buf.length);
-            this.rece_socket.receive(packet);
+            this.receSocket.receive(packet);
 
 //            开始自适应
             synchronized (this) {
@@ -117,8 +120,9 @@ public class UDPLink extends Link {
             }
 
             return new String(packet.getData(), packet.getOffset(), packet.getLength(), charset);
-        } catch (IOException e) {
-            Log.e("UDPLink", "rece:IOException", e);
+        } catch (Exception e) {
+            Log.e("UDPLink", "rece:Exception", e);
+            this.off();
             return null;
         }
     }

@@ -1,10 +1,12 @@
 package com.SensorStreamer.Component.Listen;
 
+import android.app.Activity;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
+import android.util.Log;
 
 import com.SensorStreamer.Utils.TypeTranDeter;
 
@@ -18,7 +20,7 @@ public class AudioListen extends Listen {
     /**
      * Audio 回调函数类接口
      * */
-    public interface AudioCallback {
+    public interface AudioCallback extends ListenCallback {
         /**
          * 回调函数 用于处理数据
          * @param data 传入音频数据
@@ -39,8 +41,8 @@ public class AudioListen extends Listen {
     /**
      * 常量初始化
      * */
-    public AudioListen() {
-        super();
+    public AudioListen(Activity activity) {
+        super(activity);
 
         this.intNull = 0;
     }
@@ -57,24 +59,15 @@ public class AudioListen extends Listen {
 
         String[] params = new String[1];
         params[0] = Integer.toString(samplingRate);
-        this.setCallback(callback);
 
-        return this.launch(params);
-    }
-
-    /**
-     * 设置回调函数
-     * @param callback 回调函数
-     * */
-    public void setCallback(AudioCallback callback) {
-        this.callback = callback;
+        return this.launch(params, callback);
     }
 
     /**
      * 注册监听音频所需要的成员变量 优先使用重载适配器
      * */
     @Override
-    public boolean launch(String[] params) {
+    public boolean launch(String[] params, ListenCallback callback) {
 //        0 0
         if (this.launchFlag || this.startFlag)
             return false;
@@ -87,6 +80,8 @@ public class AudioListen extends Listen {
 
         this.audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC, samplingRate, AudioFormat.CHANNEL_IN_MONO,
                 AudioFormat.ENCODING_PCM_16BIT, minBufSize * 10);
+
+        this.callback = (AudioCallback)callback;
 
 //        1 0
         return this.launchFlag = true;
@@ -101,7 +96,6 @@ public class AudioListen extends Listen {
         if (!this.launchFlag || this.startFlag)
             return false;
 
-        this.audioRecord.stop();
         this.audioRecord.release();
         this.audioRecord = null;
 
@@ -117,13 +111,19 @@ public class AudioListen extends Listen {
      * 持续读取音频数据
      * */
     private void readAudio() {
-        this.audioRecord.startRecording();
-        byte[] buf = new byte[this.minBufSize];
-        while (!Thread.currentThread().isInterrupted()) {
-            int n_read = this.audioRecord.read(buf, 0, buf.length);
-            if (n_read <= 0 || this.callback == null)
-                continue;
-            this.callback.dealAudioData(buf);
+        try {
+            this.audioRecord.startRecording();
+            byte[] buf = new byte[this.minBufSize];
+            while (!Thread.currentThread().isInterrupted()) {
+                int nRead = this.audioRecord.read(buf, 0, buf.length);
+                if (nRead <= 0 || this.callback == null) {
+                    continue;
+                }
+                this.callback.dealAudioData(buf);
+            }
+        } catch (Exception e) {
+            Log.e("AudioListen", "readAudio:Exception", e);
+            this.stopRead();
         }
     }
 
@@ -153,6 +153,8 @@ public class AudioListen extends Listen {
             return;
 
         this.readThread.interrupt();
+        if (this.audioRecord != null)
+            this.audioRecord.stop();
 
 //        1 0
         this.startFlag = false;

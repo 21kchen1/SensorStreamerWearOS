@@ -1,6 +1,6 @@
 package com.SensorStreamer.Component.Listen;
 
-import android.hardware.SensorManager;
+import android.app.Activity;
 
 /**
  * IMUListen 工厂
@@ -10,7 +10,7 @@ import android.hardware.SensorManager;
 
 public class IMUListenF extends ListenF {
     @Override
-    public Listen create() {
-        return new IMUListen();
+    public Listen create(Activity activity) {
+        return new IMUListen(activity);
     }
 }
