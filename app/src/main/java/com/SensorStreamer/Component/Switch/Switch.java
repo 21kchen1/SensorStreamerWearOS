@@ -1,6 +1,9 @@
 package com.SensorStreamer.Component.Switch;
 
 import com.SensorStreamer.Component.Link.Link;
+import com.google.gson.Gson;
+
+import java.nio.charset.Charset;
 
 /**
  * Switch 抽象类
@@ -14,6 +17,7 @@ public abstract class Switch {
      * */
     public interface SwitchCallback {};
 
+    protected final Gson gson;
     protected boolean launchFlag, startFlag;
 
     /**
@@ -24,6 +28,7 @@ public abstract class Switch {
      * 0 1 error
      * */
     public Switch() {
+        gson = new Gson();
         this.launchFlag = this.startFlag = false;
     }
 
@@ -43,7 +48,7 @@ public abstract class Switch {
     /**
      * 监听并使用回调函数
      * */
-    public abstract void startListen();
+    public abstract void startListen(Charset charset, int bufSize);
 
     /**
      * 停止监听
@@ -67,14 +72,14 @@ public abstract class Switch {
     /**
      * 是否能开始
      * */
-    public boolean canStartRead() {
+    public boolean canStartListen() {
         return this.canOff();
     }
 
     /**
      * 是否能结束
      * */
-    public boolean canStopRead() {
+    public boolean canStopListen() {
         return !(!this.launchFlag || !this.startFlag);
     }
 }

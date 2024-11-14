@@ -70,7 +70,7 @@ public class AudioListen extends Listen {
 //        0 0
         if (!this.canLaunch()) return false;
 
-        if (params.length != 1 || !TypeTranDeter.isStr2Num(params[0]) || Integer.parseInt(params[0]) <= 0)
+        if (params.length != 1 || !TypeTranDeter.canStr2Num(params[0]) || Integer.parseInt(params[0]) <= 0)
             return false;
 
         int samplingRate = Integer.parseInt(params[0]);
@@ -106,26 +106,6 @@ public class AudioListen extends Listen {
     }
 
     /**
-     * 持续读取音频数据
-     * */
-    private void readAudio() {
-        try {
-            this.audioRecord.startRecording();
-            byte[] buf = new byte[this.minBufSize];
-            while (!Thread.currentThread().isInterrupted()) {
-                int nRead = this.audioRecord.read(buf, 0, buf.length);
-                if (nRead <= 0 || this.callback == null) {
-                    continue;
-                }
-                this.callback.dealAudioData(buf);
-            }
-        } catch (Exception e) {
-            Log.e("AudioListen", "readAudio:Exception", e);
-            this.stopRead();
-        }
-    }
-
-    /**
      * 启动线程 处理音频数据
      * */
     @Override
@@ -133,11 +113,27 @@ public class AudioListen extends Listen {
 //        1 0
         if (!this.canStartRead()) return;
 
-        this.readThread = new Thread(this::readAudio);
-        this.readThread.start();
+//        创建一个持续监听音频的类
+        this.readThread = new Thread(() -> {
+            try {
+                this.audioRecord.startRecording();
+                byte[] buf = new byte[this.minBufSize];
+                while (!Thread.currentThread().isInterrupted()) {
+                    int nRead = this.audioRecord.read(buf, 0, buf.length);
+                    if (nRead <= 0 || this.callback == null) {
+                        continue;
+                    }
+                    this.callback.dealAudioData(buf);
+                }
+            } catch (Exception e) {
+                Log.e("AudioListen", "startRead.readThread:Exception", e);
+                this.stopRead();
+            }
+        });
 
 //        1 1
         this.startFlag = true;
+        this.readThread.start();
     }
 
     /**
@@ -148,7 +144,8 @@ public class AudioListen extends Listen {
 //        1 1
         if (!this.canStopRead()) return;
 
-        this.readThread.interrupt();
+        if (this.readThread != null)
+            this.readThread.interrupt();
         if (this.audioRecord != null)
             this.audioRecord.stop();
 

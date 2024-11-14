@@ -24,14 +24,21 @@ import com.SensorStreamer.Component.Listen.AudioListen;
 import com.SensorStreamer.Component.Listen.AudioListenF;
 import com.SensorStreamer.Component.Listen.IMUListen;
 import com.SensorStreamer.Component.Listen.IMUListenF;
+import com.SensorStreamer.Component.Switch.RemoteSwitch;
+import com.SensorStreamer.Component.Switch.RemoteSwitchF;
+import com.SensorStreamer.Component.Switch.Switch;
+import com.SensorStreamer.Component.Switch.SwitchF;
 import com.SensorStreamer.Model.AudioData;
 import com.SensorStreamer.Model.IMUData;
+import com.SensorStreamer.Model.RemotePDU;
+import com.SensorStreamer.Utils.TypeTranDeter;
 import com.SensorStreamer.databinding.ActivityMainBinding;
 import com.google.gson.Gson;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -56,8 +63,12 @@ public class MainActivity extends WearableActivity {
     // audio stuff
     int audioSamplingRate = 16000;
 
+//    服务器连接用
     private Link udpLink;
     private Link tcpLink;
+
+//    远程控制开关
+    private Switch tcpRemoteSwitch;
 
     private AudioListen audioListen;
     private IMUListen imuListen;
@@ -135,6 +146,10 @@ public class MainActivity extends WearableActivity {
         audioListen = (AudioListen) audioListenF.create(this);
         IMUListenF imuListenF = new IMUListenF();
         imuListen = (IMUListen) imuListenF.create(this);
+
+//        创建开关
+        SwitchF remoteSwitchF = new RemoteSwitchF();
+        tcpRemoteSwitch = remoteSwitchF.create();
     }
 
     /**
@@ -201,18 +216,42 @@ public class MainActivity extends WearableActivity {
         audioListen.stopRead();
         imuListen.off();
         audioListen.off();
-        udpLink.off();
     }
 
     public void test() {
         Thread testTread = new Thread(() -> {
-            String msg = "Hello!";
-            tcpLink.send(msg, StandardCharsets.UTF_8);
-            msg = tcpLink.rece(StandardCharsets.UTF_8, 0);
-            System.out.println(msg);
+            tcpLink.send("114514", StandardCharsets.UTF_8);
+            String msg = tcpLink.rece(StandardCharsets.UTF_8, 1024);
+            RemotePDU a = gson.fromJson(msg, RemotePDU.class);
+            System.out.println(Arrays.toString(a.data));
         });
         testTread.start();
     }
+
+    /**
+     * 远程开关回调函数
+     * 负责开启数据的传输
+     * */
+    private final RemoteSwitch.RemoteCallback remoteCallback = new RemoteSwitch.RemoteCallback() {
+        @Override
+        public void switchOn() {
+            MainActivity.this.launchSensor();
+//            ui更新
+            if (refreshUIService != null && !refreshUIService.isShutdown())
+                return;
+            refreshUIService = Executors.newSingleThreadScheduledExecutor();
+            refreshUIService.scheduleWithFixedDelay(MainActivity.this::refreshUI, 0, 500, TimeUnit.MILLISECONDS);
+        }
+
+        @Override
+        public void switchOff() {
+            MainActivity.this.offSensor();
+            if (refreshUIService == null)
+                return;
+            refreshUIService.shutdown();
+            Log.d("VS","Recorder released");
+        }
+    };
 
     private final View.OnClickListener startListener = new View.OnClickListener() {
         @Override
@@ -222,15 +261,10 @@ public class MainActivity extends WearableActivity {
                     String SERVER = ipAddr.getText().toString();
                     udpLink.launch(InetAddress.getByName(SERVER), udpPort, 0);
                     tcpLink.launch(InetAddress.getByName(SERVER), tcpPort, 2000);
-    //
-                    MainActivity.this.launchSensor();
-                    MainActivity.this.test();
 
-    //                ui 更新
-                    if (refreshUIService != null && !refreshUIService.isShutdown())
-                        return;
-                    refreshUIService = Executors.newSingleThreadScheduledExecutor();
-                    refreshUIService.scheduleWithFixedDelay(MainActivity.this::refreshUI, 0, 500, TimeUnit.MILLISECONDS);
+//                    启动远程开关
+                    tcpRemoteSwitch.launch(tcpLink, MainActivity.this.remoteCallback);
+                    tcpRemoteSwitch.startListen(StandardCharsets.UTF_8, 1024);
                 } catch (UnknownHostException e) {
                     Log.e("VS", "UnknownHostException", e);
                 }
@@ -245,10 +279,9 @@ public class MainActivity extends WearableActivity {
 
             udpLink.off();
             tcpLink.off();
-            if (refreshUIService == null)
-                return;
-            refreshUIService.shutdown();
-            Log.d("VS","Recorder released");
+
+            tcpRemoteSwitch.stopListen();
+            tcpRemoteSwitch.off();
         }
     };
 

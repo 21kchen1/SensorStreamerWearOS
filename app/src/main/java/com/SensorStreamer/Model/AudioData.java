@@ -7,8 +7,8 @@ package com.SensorStreamer.Model;
  * */
 
 public class AudioData {
-    long unixTimestamp;
-    byte[] audioData;
+    public long unixTimestamp;
+    public byte[] audioData;
 
     /**
      * @param unixTimestamp 时间戳

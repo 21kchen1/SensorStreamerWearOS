@@ -7,10 +7,10 @@ package com.SensorStreamer.Model;
  * */
 
 public class IMUData {
-    long unixTimestamp;
-    long sensorTimestamp;
-    String sensorType;
-    float[] values;
+    public long unixTimestamp;
+    public long sensorTimestamp;
+    public String sensorType;
+    public float[] values;
 
     /**
      * @param unixTimestamp 系统时间戳

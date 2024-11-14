@@ -82,7 +82,7 @@ public class IMUListen extends Listen {
 //        0 0
         if (!this.canLaunch()) return false;
 
-        if (params.length < 2 || params.length > this.sensorDir.size() + 1 || !TypeTranDeter.isStr2Num(params[params.length - 1]) || Integer.parseInt(params[params.length - 1]) < 0)
+        if (params.length < 2 || params.length > this.sensorDir.size() + 1 || !TypeTranDeter.canStr2Num(params[params.length - 1]) || Integer.parseInt(params[params.length - 1]) < 0)
             return false;
 
         this.samplingRate = Integer.parseInt(params[params.length - 1]);
@@ -91,7 +91,7 @@ public class IMUListen extends Listen {
 //        获取当前选择的 Sensor
         for (int i = 0; i < params.length - 1; i++) {
 //            是否存在于字典中 判断是否有效
-            if (!TypeTranDeter.isStr2Num(params[i]) || !this.sensorDir.containsKey(Integer.parseInt(params[i]))) {
+            if (!TypeTranDeter.canStr2Num(params[i]) || !this.sensorDir.containsKey(Integer.parseInt(params[i]))) {
                 this.launchFlag = true;
                 this.off();
                 return false;

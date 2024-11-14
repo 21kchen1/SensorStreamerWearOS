@@ -2,6 +2,11 @@ package com.SensorStreamer.Utils;
 
 import android.util.Log;
 
+import com.SensorStreamer.Model.RemotePDU;
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
+
+
 /**
  * 判断类型转换是否成功的工具函数
  * @author chen
@@ -9,13 +14,25 @@ import android.util.Log;
  * */
 
 public class TypeTranDeter {
-    public static boolean isStr2Num(String str) {
+    private static final Gson gson = new Gson();
+
+    public static boolean canStr2Num(String str) {
         try {
             Integer.parseInt(str);
+            return true;
         } catch (NumberFormatException e) {
-            Log.e("isStr2Num", "NumberFormatException", e);
+            Log.e("TypeTranDeter", "canStr2Num:NumberFormatException", e);
             return false;
         }
-        return true;
+    }
+
+    public static boolean canStr2JsonData(String str, Class<?> object) {
+        try {
+            gson.fromJson(str, object);
+            return true;
+        } catch (JsonSyntaxException e) {
+            Log.e("TypeTranDeter", "canStr2JsonData:JsonSyntaxException", e);
+            return false;
+        }
     }
 }
