@@ -16,7 +16,7 @@ public abstract class Listen implements SensorEventListener {
     /**
      * 通用回调函数接口
      * */
-    public interface ListenCallback {};
+    public interface ListenCallback {}
 
     protected final SensorManager sensorManager;
     protected boolean launchFlag, startFlag;
@@ -40,17 +40,48 @@ public abstract class Listen implements SensorEventListener {
      * @return 是否启动成功
      * */
     public abstract boolean launch(String[] params, ListenCallback callback);
+
     /**
      * 注销组件
      * @return 是否注销成功
      * */
     public abstract boolean off();
+
     /**
      * 持续读取数据并处理
      * */
     public abstract void startRead();
+
     /**
      * 结束持续读取数据
      * */
     public abstract void stopRead();
+
+    /**
+     * 是否能注册
+     * */
+    public boolean canLaunch() {
+        return !(this.launchFlag || this.startFlag);
+    }
+
+    /**
+     * 是否能注销
+     * */
+    public boolean canOff() {
+        return !(!this.launchFlag || this.startFlag);
+    }
+
+    /**
+     * 是否能开始
+     * */
+    public boolean canStartRead() {
+        return this.canOff();
+    }
+
+    /**
+     * 是否能结束
+     * */
+    public boolean canStopRead() {
+        return !(!this.launchFlag || !this.startFlag);
+    }
 }

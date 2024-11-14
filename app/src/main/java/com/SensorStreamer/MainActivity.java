@@ -217,23 +217,23 @@ public class MainActivity extends WearableActivity {
     private final View.OnClickListener startListener = new View.OnClickListener() {
         @Override
         public void onClick(View arg0) {
-            try {
-                String SERVER = ipAddr.getText().toString();
-                udpLink.launch(InetAddress.getByName(SERVER), udpPort, 0);
-//
-                MainActivity.this.launchSensor();
-                MainActivity.this.test();
-
-//                ui 更新
-                if (refreshUIService != null && !refreshUIService.isShutdown())
-                    return;
-                refreshUIService = Executors.newSingleThreadScheduledExecutor();
-                refreshUIService.scheduleWithFixedDelay(MainActivity.this::refreshUI, 0, 500, TimeUnit.MILLISECONDS);
-            } catch (UnknownHostException e) {
-                Log.e("VS", "UnknownHostException", e);
-            }
             new Thread(() -> {
-//                tcpLink.launch(InetAddress.getByName(SERVER), tcpPort, 2000);
+                try {
+                    String SERVER = ipAddr.getText().toString();
+                    udpLink.launch(InetAddress.getByName(SERVER), udpPort, 0);
+                    tcpLink.launch(InetAddress.getByName(SERVER), tcpPort, 2000);
+    //
+                    MainActivity.this.launchSensor();
+                    MainActivity.this.test();
+
+    //                ui 更新
+                    if (refreshUIService != null && !refreshUIService.isShutdown())
+                        return;
+                    refreshUIService = Executors.newSingleThreadScheduledExecutor();
+                    refreshUIService.scheduleWithFixedDelay(MainActivity.this::refreshUI, 0, 500, TimeUnit.MILLISECONDS);
+                } catch (UnknownHostException e) {
+                    Log.e("VS", "UnknownHostException", e);
+                }
             }).start();
         }
     };
@@ -244,7 +244,7 @@ public class MainActivity extends WearableActivity {
             MainActivity.this.offSensor();
 
             udpLink.off();
-//            tcpLink.off();
+            tcpLink.off();
             if (refreshUIService == null)
                 return;
             refreshUIService.shutdown();

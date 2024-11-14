@@ -11,7 +11,7 @@ import android.util.Log;
 import com.SensorStreamer.Utils.TypeTranDeter;
 
 /**
- * 读取音频数据 并基于回调函数处理
+ * 读取音频数据，并基于回调函数处理
  * @author chen
  * @version 1.0
  * */
@@ -52,10 +52,9 @@ public class AudioListen extends Listen {
      * @param samplingRate 采样率
      * @param callback 数据处理回调函数
      * */
-    public boolean launch(int samplingRate, AudioCallback callback) {
+    public synchronized boolean launch(int samplingRate, AudioCallback callback) {
 //        0 0
-        if (this.launchFlag || this.startFlag)
-            return false;
+        if (!this.canLaunch()) return false;
 
         String[] params = new String[1];
         params[0] = Integer.toString(samplingRate);
@@ -67,10 +66,9 @@ public class AudioListen extends Listen {
      * 注册监听音频所需要的成员变量 优先使用重载适配器
      * */
     @Override
-    public boolean launch(String[] params, ListenCallback callback) {
+    public synchronized boolean launch(String[] params, ListenCallback callback) {
 //        0 0
-        if (this.launchFlag || this.startFlag)
-            return false;
+        if (!this.canLaunch()) return false;
 
         if (params.length != 1 || !TypeTranDeter.isStr2Num(params[0]) || Integer.parseInt(params[0]) <= 0)
             return false;
@@ -91,9 +89,9 @@ public class AudioListen extends Listen {
      * 注销监听音频所需要的成员变量
      * */
     @Override
-    public boolean off() {
+    public synchronized boolean off() {
 //        1 0
-        if (!this.launchFlag || this.startFlag)
+        if (!this.canOff())
             return false;
 
         this.audioRecord.release();
@@ -131,10 +129,9 @@ public class AudioListen extends Listen {
      * 启动线程 处理音频数据
      * */
     @Override
-    public void startRead() {
+    public synchronized void startRead() {
 //        1 0
-        if (!this.launchFlag || this.startFlag)
-            return;
+        if (!this.canStartRead()) return;
 
         this.readThread = new Thread(this::readAudio);
         this.readThread.start();
@@ -147,10 +144,9 @@ public class AudioListen extends Listen {
      * 结束线程 停止处理音频数据
      * */
     @Override
-    public void stopRead() {
+    public synchronized void stopRead() {
 //        1 1
-        if (!this.launchFlag || !this.startFlag)
-            return;
+        if (!this.canStopRead()) return;
 
         this.readThread.interrupt();
         if (this.audioRecord != null)

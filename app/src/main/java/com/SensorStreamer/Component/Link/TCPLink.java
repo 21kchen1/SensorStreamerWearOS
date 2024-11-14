@@ -34,10 +34,9 @@ public class TCPLink extends Link {
      * 注册所有可变成员变量，设置目的地址
      * */
     @Override
-    public boolean launch(InetAddress address, int port, int timeout) {
+    public synchronized boolean launch(InetAddress address, int port, int timeout) {
 //        0
-        if (this.launchFlag)
-            return false;
+        if (!this.canLaunch()) return false;
 
         try {
             this.address = address;
@@ -58,10 +57,9 @@ public class TCPLink extends Link {
      * 注销所有可变成员变量
      * */
     @Override
-    public boolean off() {
+    public synchronized boolean off() {
 //        1
-        if (!this.launchFlag)
-            return false;
+        if (!this.canOff()) return false;
 
         try {
             if (this.socket != null && !this.socket.isClosed())
@@ -86,7 +84,7 @@ public class TCPLink extends Link {
     @Override
     public void send(String msg, Charset charset) {
 //        1
-        if (!this.launchFlag)
+        if (!this.canSend())
             return;
 
         try {
@@ -105,7 +103,7 @@ public class TCPLink extends Link {
     @Override
     public String rece(Charset charset, int bufSize) {
 //        1
-        if (!this.launchFlag)
+        if (!this.canRece())
             return null;
 
         try {
@@ -119,9 +117,6 @@ public class TCPLink extends Link {
         }
     }
 
-    /**
-     * 自适应缓冲大小
-     * */
     @Override
     protected synchronized void adaptiveBufSize(int packetSize) {
 

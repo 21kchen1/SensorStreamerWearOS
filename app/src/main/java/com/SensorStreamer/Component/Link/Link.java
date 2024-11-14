@@ -31,25 +31,29 @@ public abstract class Link {
         this.minBufSize = 64;
         this.bufSize = 1024;
     }
+
     /**
-     * 注册并启动组件
+     * 注册组件
      * @param address 目的地址
      * @param port 目的端口
      * @param timeout 连接超时
-     * @return 是否创建成功
+     * @return 是否注册成功
      * */
     public abstract boolean launch(InetAddress address, int port, int timeout);
+
     /**
-     * 注销并关闭组件
+     * 注销组件
      * @return 是否注销成功
      * */
     public abstract boolean off();
+
     /**
      * 发信
      * @param msg 数据
      * @param charset 编码集
      * */
     public abstract void send(String msg, Charset charset);
+
     /**
      * 收信
      * @param charset 编码集
@@ -57,9 +61,38 @@ public abstract class Link {
      * @return 数据
      * */
     public abstract String rece(Charset charset, int bufSize);
+
     /**
      * 自适应缓冲大小设置
      * @param packetSize 当前包大小
      * */
     protected abstract void adaptiveBufSize(int packetSize);
+
+    /**
+     * 能否注册
+     * */
+    public boolean canLaunch() {
+        return !this.launchFlag;
+    }
+
+    /**
+     * 能否注销
+     * */
+    public boolean canOff() {
+        return this.launchFlag;
+    }
+
+    /**
+     * 能否发送
+     * */
+    public boolean canSend() {
+        return this.canOff();
+    }
+
+    /**
+     * 能否接收
+     * */
+    public boolean canRece() {
+        return this.canOff();
+    }
 }

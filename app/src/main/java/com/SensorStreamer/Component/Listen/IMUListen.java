@@ -60,10 +60,9 @@ public class IMUListen extends Listen {
      * @param samplingRate 采样率
      * @param callback 数据处理回调函数
      * */
-    public boolean launch(int[] sensors, int samplingRate, IMUCallback callback) {
+    public synchronized boolean launch(int[] sensors, int samplingRate, IMUCallback callback) {
 //        0 0
-        if (this.launchFlag || this.startFlag)
-            return false;
+        if (!this.canLaunch()) return false;
         
         String[] params = new String[sensors.length + 1];
 //        将类型转换为字符串参数
@@ -79,10 +78,9 @@ public class IMUListen extends Listen {
      * 选择 Sensor，并设置成员变量，优先使用重载适配器
      * */
     @Override
-    public boolean launch(String[] params, ListenCallback callback) {
+    public synchronized boolean launch(String[] params, ListenCallback callback) {
 //        0 0
-        if (this.launchFlag || this.startFlag)
-            return false;
+        if (!this.canLaunch()) return false;
 
         if (params.length < 2 || params.length > this.sensorDir.size() + 1 || !TypeTranDeter.isStr2Num(params[params.length - 1]) || Integer.parseInt(params[params.length - 1]) < 0)
             return false;
@@ -113,10 +111,9 @@ public class IMUListen extends Listen {
      * @implNote 如果在调用 off 前有使用 startRead，必须先使用 stopRead
      * */
     @Override
-    public boolean off() {
+    public synchronized boolean off() {
 //        1 0
-        if (!this.launchFlag || this.startFlag)
-            return false;
+        if (!this.canOff()) return false;
 
         this.samplingRate = this.intNull;
         this.sensors = null;
@@ -133,10 +130,9 @@ public class IMUListen extends Listen {
      * @// TODO: 2024/11/7 还需要添加按采样率发送数据的程序，需要设置buf和大小
      * */
     @Override
-    public void startRead() {
+    public synchronized void startRead() {
 //        1 0
-        if (!this.launchFlag || this.startFlag)
-            return;
+        if (!this.canStartRead()) return;
 
 //        注册对应的监听
         for (Sensor sensor : this.sensors) {
@@ -152,10 +148,9 @@ public class IMUListen extends Listen {
      * @// TODO: 2024/11/7 记得处理按采样率发送数据的程序
      * */
     @Override
-    public void stopRead() {
+    public synchronized void stopRead() {
 //        1 1
-        if (!this.launchFlag || !this.startFlag)
-            return;
+        if (!this.canStopRead()) return;
 
 //        注销对应的监听
         for (Sensor sensor : this.sensors) {
