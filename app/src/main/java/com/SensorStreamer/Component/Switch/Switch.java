@@ -47,8 +47,9 @@ public abstract class Switch {
 
     /**
      * 监听并使用回调函数
+     * @param bufSize 缓存大小
      * */
-    public abstract void startListen(Charset charset, int bufSize);
+    public abstract void startListen(int bufSize);
 
     /**
      * 停止监听

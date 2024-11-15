@@ -2,7 +2,6 @@ package com.SensorStreamer.Utils;
 
 import android.util.Log;
 
-import com.SensorStreamer.Model.RemotePDU;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 

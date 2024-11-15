@@ -75,7 +75,7 @@ public class RemoteSwitch extends Switch {
      * 开始监听事件，并基于事件类型选择对应的回调函数
      * */
     @Override
-    public synchronized void startListen(Charset charset, int bufSize) {
+    public synchronized void startListen(int bufSize) {
 //        1 0
         if (!this.canStartListen())
             return;
@@ -83,7 +83,7 @@ public class RemoteSwitch extends Switch {
         this.listenThread = new Thread(() -> {
             try {
                 while (!Thread.currentThread().isInterrupted()) {
-                    String msg = this.link.rece(charset, bufSize);
+                    String msg = this.link.rece(bufSize);
                     if (!TypeTranDeter.canStr2JsonData(msg, RemotePDU.class))
                         continue;
                     RemotePDU remotePDU = this.gson.fromJson(msg, RemotePDU.class);
@@ -91,12 +91,12 @@ public class RemoteSwitch extends Switch {
                     if (!remotePDU.type.equals(RemotePDU.TYPE_CONTROL))
                         continue;
 //                    根据类型执行回调函数
-                    switch (remotePDU.data[0]) {
-                        case RemotePDU.DATA_CONTROL_SWITCHON: {
+                    switch (remotePDU.control) {
+                        case RemotePDU.CONTROL_SWITCHON: {
                             this.callback.switchOn();
                             break;
                         }
-                        case RemotePDU.DATA_CONTROL_SWITCHOFF: {
+                        case RemotePDU.CONTROL_SWITCHOFF: {
                             this.callback.switchOff();
                             break;
                         }

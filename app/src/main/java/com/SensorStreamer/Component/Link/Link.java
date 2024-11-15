@@ -2,22 +2,29 @@ package com.SensorStreamer.Component.Link;
 
 import java.net.InetAddress;
 import java.nio.charset.Charset;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Link 抽象类
  * @author chen
  * @version 1.2
- * @implNote 注意多线程安全，避免在执行函数中修改公共变量
+ * @// TODO: 2024/11/15 记得加timeout，超时就告诉普通rece，取消从队列获取数据
  * */
 
 public abstract class Link {
+//    心跳标记
+    protected final static String HEARTBEAT = "heartbeat";
+
+//    缓存最值
+    protected final int maxBufSize, minBufSize;
+
     protected boolean launchFlag;
     protected InetAddress address;
     protected int port;
-//    缓存最值
-    protected final int maxBufSize, minBufSize;
 //    自适应缓存大小
     protected int bufSize;
+//    编码集
+    protected Charset charset;
 
     /**
      * 设置启动标志
@@ -28,8 +35,9 @@ public abstract class Link {
         this.launchFlag = false;
 
         this.maxBufSize = 65536;
-        this.minBufSize = 64;
+        this.minBufSize = 128;
         this.bufSize = 1024;
+
     }
 
     /**
@@ -37,9 +45,10 @@ public abstract class Link {
      * @param address 目的地址
      * @param port 目的端口
      * @param timeout 连接超时
+     * @param charset 编码集
      * @return 是否注册成功
      * */
-    public abstract boolean launch(InetAddress address, int port, int timeout);
+    public abstract boolean launch(InetAddress address, int port, int timeout, Charset charset);
 
     /**
      * 注销组件
@@ -50,17 +59,16 @@ public abstract class Link {
     /**
      * 发信
      * @param msg 数据
-     * @param charset 编码集
      * */
-    public abstract void send(String msg, Charset charset);
+    public abstract void send(String msg);
 
     /**
-     * 收信
-     * @param charset 编码集
+     * 收息
      * @param bufSize 缓存大小
      * @return 数据
      * */
-    public abstract String rece(Charset charset, int bufSize);
+    public abstract String rece(int bufSize);
+
 
     /**
      * 自适应缓冲大小设置

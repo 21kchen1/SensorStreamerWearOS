@@ -8,7 +8,9 @@ import android.util.Log;
 
 import com.SensorStreamer.Utils.TypeTranDeter;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * 读取 IMU 数据，并基于回调函数处理
@@ -37,7 +39,7 @@ public class IMUListen extends Listen {
 //    当采样率为 0 时 启动变化时传输数据
     private int samplingRate;
 //    需要监听的 sensor
-    private Sensor[] sensors;
+    private List<Sensor> sensors;
 
     /**
      * 常量初始化
@@ -82,22 +84,23 @@ public class IMUListen extends Listen {
 //        0 0
         if (!this.canLaunch()) return false;
 
-        if (params.length < 2 || params.length > this.sensorDir.size() + 1 || !TypeTranDeter.canStr2Num(params[params.length - 1]) || Integer.parseInt(params[params.length - 1]) < 0)
+        if (params.length < 2 || !TypeTranDeter.canStr2Num(params[params.length - 1]) || Integer.parseInt(params[params.length - 1]) < 0)
             return false;
 
         this.samplingRate = Integer.parseInt(params[params.length - 1]);
 
-        this.sensors = new Sensor[params.length - 1];
+        this.sensors = new ArrayList<>();
 //        获取当前选择的 Sensor
         for (int i = 0; i < params.length - 1; i++) {
-//            是否存在于字典中 判断是否有效
-            if (!TypeTranDeter.canStr2Num(params[i]) || !this.sensorDir.containsKey(Integer.parseInt(params[i]))) {
-                this.launchFlag = true;
-                this.off();
-                return false;
-            }
+//            是否有效 是否在字典中
+            if (!TypeTranDeter.canStr2Num(params[i]) || !this.sensorDir.containsKey(Integer.parseInt(params[i])))
+                continue;
             int type = Integer.parseInt(params[i]);
-            this.sensors[i] = this.sensorManager.getDefaultSensor(type);
+            Sensor sensor = this.sensorManager.getDefaultSensor(type);
+//            是否重复
+            if (this.sensors.contains(sensor))
+                continue;
+            this.sensors.add(sensor);
         }
 
         this.callback = (IMUCallback) callback;
@@ -115,8 +118,12 @@ public class IMUListen extends Listen {
 //        1 0
         if (!this.canOff()) return false;
 
-        this.samplingRate = this.intNull;
+        if (this.sensors != null)
+            this.sensors.clear();
         this.sensors = null;
+
+        this.samplingRate = this.intNull;
+
         this.callback = null;
 
 //        0 0

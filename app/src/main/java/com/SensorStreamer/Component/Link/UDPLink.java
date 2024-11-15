@@ -2,11 +2,9 @@ package com.SensorStreamer.Component.Link;
 
 import android.util.Log;
 
-import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.SocketException;
 import java.nio.charset.Charset;
 
 /**
@@ -30,7 +28,7 @@ public class UDPLink extends Link {
      * 注册所有可变成员变量，设置目的地址
      * */
     @Override
-    public synchronized boolean launch(InetAddress address, int port, int timeout) {
+    public synchronized boolean launch(InetAddress address, int port, int timeout, Charset charset) {
 //        0
         if (this.launchFlag)
             return false;
@@ -38,6 +36,7 @@ public class UDPLink extends Link {
         try {
             this.address = address;
             this.port = port;
+            this.charset = charset;
 //            发送用初始化
             this.sendSocket = new DatagramSocket();
 //            接收用初始化 固定接收对应地址端口的信息
@@ -50,7 +49,8 @@ public class UDPLink extends Link {
         }
 
 //        1
-        return this.launchFlag = true;
+        this.launchFlag = true;
+        return true;
     }
 
     /**
@@ -62,16 +62,22 @@ public class UDPLink extends Link {
         if (!this.launchFlag)
             return false;
 
-        if (this.sendSocket != null && !this.sendSocket.isClosed())
-            this.sendSocket.close();
-        this.sendSocket = null;
+        try {
+            if (this.sendSocket != null && !this.sendSocket.isClosed())
+                this.sendSocket.close();
+            this.sendSocket = null;
 
-        if (this.receSocket != null && !this.receSocket.isClosed())
-            this.receSocket.close();
-        this.receSocket = null;
+            if (this.receSocket != null && !this.receSocket.isClosed())
+                this.receSocket.close();
+            this.receSocket = null;
 
-        this.address = null;
-        this.port = this.intNull;
+            this.address = null;
+            this.port = this.intNull;
+            this.charset = null;
+        } catch (Exception e) {
+            Log.d("UDPLink", "off:Exception", e);
+            return false;
+        }
 
 //        0
         this.launchFlag = false;
@@ -82,13 +88,13 @@ public class UDPLink extends Link {
      * 发送 buf 数据
      * */
     @Override
-    public void send(String msg, Charset charset) {
+    public void send(String msg) {
 //        1
         if (!this.launchFlag)
             return;
 
         try {
-            byte[] buf = msg.getBytes(charset);
+            byte[] buf = msg.getBytes(this.charset);
             DatagramPacket packet = new DatagramPacket(buf, buf.length, this.address, this.port);
             this.sendSocket.send(packet);
         } catch (Exception e) {
@@ -101,25 +107,24 @@ public class UDPLink extends Link {
      * 接收并将数据存储在 buf
      * */
     @Override
-    public String rece(Charset charset, int bufSize) {
+    public String rece(int bufSize) {
 //        1
         if (!this.launchFlag)
             return null;
 
-        if (bufSize <= this.intNull)
+        if (bufSize < this.minBufSize)
             bufSize = this.bufSize;
 
         try {
             byte[] buf = new byte[bufSize];
             DatagramPacket packet = new DatagramPacket(buf, buf.length);
             this.receSocket.receive(packet);
-
 //            开始自适应
             synchronized (this) {
                 this.adaptiveBufSize(packet.getLength());
             }
 
-            return new String(packet.getData(), packet.getOffset(), packet.getLength(), charset);
+            return new String(packet.getData(), packet.getOffset(), packet.getLength(), this.charset);
         } catch (Exception e) {
             Log.e("UDPLink", "rece:Exception", e);
             this.off();
