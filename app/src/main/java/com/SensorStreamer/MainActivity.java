@@ -16,9 +16,9 @@ import android.widget.TextView;
 
 import androidx.core.content.ContextCompat;
 
+import com.SensorStreamer.Component.Link.HTCPLink;
 import com.SensorStreamer.Component.Link.Link;
 import com.SensorStreamer.Component.Link.LinkF;
-import com.SensorStreamer.Component.Link.TCPLink;
 import com.SensorStreamer.Component.Link.TCPLinkF;
 import com.SensorStreamer.Component.Link.UDPLinkF;
 import com.SensorStreamer.Component.Listen.AudioListen;
@@ -65,7 +65,9 @@ public class MainActivity extends WearableActivity {
 
 //    服务器连接用
     private Link udpLink;
-    private TCPLink tcpLink;
+    private Link tcpLink;
+
+    private HTCPLink htcpLink;
 
 //    远程控制开关
     private Switch tcpRemoteSwitch;
@@ -140,7 +142,7 @@ public class MainActivity extends WearableActivity {
         LinkF udpLinkF = new UDPLinkF();
         udpLink = udpLinkF.create();
         LinkF tcpLinkF = new TCPLinkF();
-        tcpLink = (TCPLink) tcpLinkF.create();
+        tcpLink = tcpLinkF.create();
 
 //        创建监听器
         AudioListenF audioListenF = new AudioListenF();
@@ -151,6 +153,8 @@ public class MainActivity extends WearableActivity {
 //        创建开关
         SwitchF remoteSwitchF = new RemoteSwitchF();
         tcpRemoteSwitch = remoteSwitchF.create();
+
+        htcpLink = new HTCPLink();
     }
 
     /**
@@ -222,7 +226,7 @@ public class MainActivity extends WearableActivity {
     public void test() {
         Thread testTread = new Thread(() -> {
             tcpLink.send("114514");
-            String msg = tcpLink.rece(1024);
+            String msg = tcpLink.rece(1024, 5000);
             RemotePDU a = gson.fromJson(msg, RemotePDU.class);
             System.out.println(Arrays.toString(a.data));
         });
@@ -259,14 +263,16 @@ public class MainActivity extends WearableActivity {
             new Thread(() -> {
                 try {
                     String SERVER = ipAddr.getText().toString();
-                    if (!tcpLink.launch(InetAddress.getByName(SERVER), tcpPort, 2000, StandardCharsets.UTF_8))
-                        return;
-                    if (!udpLink.launch(InetAddress.getByName(SERVER), udpPort, 0, StandardCharsets.UTF_8))
-                        return;
-
-//                    启动远程开关
-                    tcpRemoteSwitch.launch(tcpLink, MainActivity.this.remoteCallback);
-                    tcpRemoteSwitch.startListen(1024);
+//                    if (!tcpLink.launch(InetAddress.getByName(SERVER), tcpPort, 2000, StandardCharsets.UTF_8))
+//                        return;
+//                    if (!udpLink.launch(InetAddress.getByName(SERVER), udpPort, 0, StandardCharsets.UTF_8))
+//                        return;
+//
+////                    启动远程开关
+//                    tcpRemoteSwitch.launch(tcpLink, MainActivity.this.remoteCallback);
+//                    tcpRemoteSwitch.startListen(1024);
+                    htcpLink.launch(InetAddress.getByName(SERVER), tcpPort, 2000, StandardCharsets.UTF_8);
+                    htcpLink.startHeartbeat(2000, 2000);
                 } catch (UnknownHostException e) {
                     Log.e("VS", "UnknownHostException", e);
                 }
@@ -277,6 +283,8 @@ public class MainActivity extends WearableActivity {
     private final View.OnClickListener stopListener = new View.OnClickListener() {
         @Override
         public void onClick(View arg0) {
+            htcpLink.off();
+
             MainActivity.this.offSensor();
 
             tcpRemoteSwitch.stopListen();

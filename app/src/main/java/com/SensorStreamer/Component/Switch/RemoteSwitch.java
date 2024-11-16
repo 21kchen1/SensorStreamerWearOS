@@ -83,7 +83,7 @@ public class RemoteSwitch extends Switch {
         this.listenThread = new Thread(() -> {
             try {
                 while (!Thread.currentThread().isInterrupted()) {
-                    String msg = this.link.rece(bufSize);
+                    String msg = this.link.rece(bufSize, Link.INTNULL);
                     if (!TypeTranDeter.canStr2JsonData(msg, RemotePDU.class))
                         continue;
                     RemotePDU remotePDU = this.gson.fromJson(msg, RemotePDU.class);

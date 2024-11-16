@@ -14,6 +14,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 public abstract class Link {
 //    心跳标记
     protected final static String HEARTBEAT = "heartbeat";
+    public final static int INTNULL = 0;
 
 //    缓存最值
     protected final int maxBufSize, minBufSize;
@@ -65,9 +66,10 @@ public abstract class Link {
     /**
      * 收息
      * @param bufSize 缓存大小
+     * @param timeLimit 接收时间限制，毫秒为单位
      * @return 数据
      * */
-    public abstract String rece(int bufSize);
+    public abstract String rece(int bufSize, int timeLimit);
 
 
     /**

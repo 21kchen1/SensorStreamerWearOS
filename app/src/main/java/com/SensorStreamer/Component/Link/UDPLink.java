@@ -14,14 +14,11 @@ import java.nio.charset.Charset;
  * */
 
 public class UDPLink extends Link {
-    private final int intNull;
 //    发送和接收数据的 socket
     private DatagramSocket sendSocket, receSocket;
 
     public UDPLink () {
         super();
-
-        intNull = 0;
     }
 
     /**
@@ -30,7 +27,7 @@ public class UDPLink extends Link {
     @Override
     public synchronized boolean launch(InetAddress address, int port, int timeout, Charset charset) {
 //        0
-        if (this.launchFlag)
+        if (!this.canLaunch())
             return false;
 
         try {
@@ -59,7 +56,7 @@ public class UDPLink extends Link {
     @Override
     public synchronized boolean off() {
 //        1
-        if (!this.launchFlag)
+        if (!this.canOff())
             return false;
 
         try {
@@ -72,7 +69,7 @@ public class UDPLink extends Link {
             this.receSocket = null;
 
             this.address = null;
-            this.port = this.intNull;
+            this.port = Link.INTNULL;
             this.charset = null;
         } catch (Exception e) {
             Log.d("UDPLink", "off:Exception", e);
@@ -90,7 +87,7 @@ public class UDPLink extends Link {
     @Override
     public void send(String msg) {
 //        1
-        if (!this.launchFlag)
+        if (!this.canSend())
             return;
 
         try {
@@ -107,9 +104,9 @@ public class UDPLink extends Link {
      * 接收并将数据存储在 buf
      * */
     @Override
-    public String rece(int bufSize) {
+    public String rece(int bufSize, int timeLimit) {
 //        1
-        if (!this.launchFlag)
+        if (!this.canRece())
             return null;
 
         if (bufSize < this.minBufSize)
@@ -118,6 +115,10 @@ public class UDPLink extends Link {
         try {
             byte[] buf = new byte[bufSize];
             DatagramPacket packet = new DatagramPacket(buf, buf.length);
+
+//            设置时间限制
+            if (timeLimit != Link.INTNULL)
+                this.receSocket.setSoTimeout(timeLimit);
             this.receSocket.receive(packet);
 //            开始自适应
             synchronized (this) {
