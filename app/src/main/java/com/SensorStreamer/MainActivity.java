@@ -2,6 +2,7 @@ package com.SensorStreamer;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.media.AudioFormat;
@@ -40,6 +41,8 @@ import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Locale;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -90,6 +93,9 @@ public class MainActivity extends WearableActivity {
     };
 
     private ScheduledExecutorService refreshUIService;
+
+//    创建通知服务
+    private Intent intent;
 
     private static boolean hasPermissions(Context context, String... permissions) {
         // check Android hardware permissions
@@ -153,8 +159,10 @@ public class MainActivity extends WearableActivity {
 //        创建开关
         SwitchF remoteSwitchF = new RemoteSwitchF();
         tcpRemoteSwitch = remoteSwitchF.create();
-
+//        心跳 TCP
         htcpLink = new HTCPLink();
+
+        intent = new Intent(MainActivity.this, SensorService.class);
     }
 
     /**
@@ -265,14 +273,19 @@ public class MainActivity extends WearableActivity {
                     String SERVER = ipAddr.getText().toString();
 //                    if (!tcpLink.launch(InetAddress.getByName(SERVER), tcpPort, 2000, StandardCharsets.UTF_8))
 //                        return;
-//                    if (!udpLink.launch(InetAddress.getByName(SERVER), udpPort, 0, StandardCharsets.UTF_8))
-//                        return;
-//
-////                    启动远程开关
-//                    tcpRemoteSwitch.launch(tcpLink, MainActivity.this.remoteCallback);
-//                    tcpRemoteSwitch.startListen(1024);
-                    htcpLink.launch(InetAddress.getByName(SERVER), tcpPort, 2000, StandardCharsets.UTF_8);
+                    if (!htcpLink.launch(InetAddress.getByName(SERVER), tcpPort, 100, StandardCharsets.UTF_8))
+                        return;
                     htcpLink.startHeartbeat(2000, 2000);
+                    if (!udpLink.launch(InetAddress.getByName(SERVER), udpPort, 0, StandardCharsets.UTF_8))
+                        return;
+
+//                    启动远程开关
+//                    tcpRemoteSwitch.launch(tcpLink, MainActivity.this.remoteCallback);
+                    tcpRemoteSwitch.launch(htcpLink, MainActivity.this.remoteCallback);
+                    tcpRemoteSwitch.startListen(1024);
+
+
+//                    startService(MainActivity.this.intent);
                 } catch (UnknownHostException e) {
                     Log.e("VS", "UnknownHostException", e);
                 }
@@ -283,32 +296,41 @@ public class MainActivity extends WearableActivity {
     private final View.OnClickListener stopListener = new View.OnClickListener() {
         @Override
         public void onClick(View arg0) {
-            htcpLink.off();
 
             MainActivity.this.offSensor();
 
             tcpRemoteSwitch.stopListen();
             tcpRemoteSwitch.off();
 
-//            保证全部关闭
-            MainActivity.this.offSensor();
-            if (refreshUIService == null)
-                return;
-            refreshUIService.shutdown();
+            htcpLink.off();
+
 //            关闭连接，允许更新地址
             if(!udpLink.off() || !tcpLink.off())
                 Log.e("MainActivity", "Link off error");
+            if (refreshUIService == null)
+                return;
+            refreshUIService.shutdown();
+
+            stopService(MainActivity.this.intent);
         }
     };
 
     private void wakeLockAcquire(){
-        if (mWakeLock != null){
-            Log.e(LOG_TAG, "WakeLock already acquired!");
-            return;
-        }
-        mWakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "sensors_data_logger:wakelock");
-        mWakeLock.acquire(600*60*1000L /*10 hours*/);
-        Log.e(LOG_TAG, "WakeLock acquired!");
+
+        Timer timer = new Timer();
+        TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+                if (mWakeLock != null){
+                    Log.e(LOG_TAG, "WakeLock already acquired!");
+                    return;
+                }
+                mWakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "sensors_data_logger:wakelock");
+                mWakeLock.acquire(600*60*1000L /*10 hours*/);
+                Log.e(LOG_TAG, "WakeLock acquired!");
+            }
+        };
+        timer.schedule(task, 2000);
     }
 
     private void wakeLockRelease(){

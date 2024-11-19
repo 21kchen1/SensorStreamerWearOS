@@ -83,7 +83,10 @@ public class RemoteSwitch extends Switch {
         this.listenThread = new Thread(() -> {
             try {
                 while (!Thread.currentThread().isInterrupted()) {
+                    if (!this.link.canRece())
+                        break;
                     String msg = this.link.rece(bufSize, Link.INTNULL);
+//                    信息格式确认
                     if (!TypeTranDeter.canStr2JsonData(msg, RemotePDU.class))
                         continue;
                     RemotePDU remotePDU = this.gson.fromJson(msg, RemotePDU.class);
@@ -105,6 +108,7 @@ public class RemoteSwitch extends Switch {
             }
             catch (Exception e) {
                 Log.e("RemoteSwitch", "startListen.listenThread:Exception", e);
+            } finally {
                 this.stopListen();
             }
         });

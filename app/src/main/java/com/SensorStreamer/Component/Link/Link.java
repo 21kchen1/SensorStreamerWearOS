@@ -12,8 +12,6 @@ import java.util.concurrent.LinkedBlockingQueue;
  * */
 
 public abstract class Link {
-//    心跳标记
-    protected final static String HEARTBEAT = "heartbeat";
     public final static int INTNULL = 0;
 
 //    缓存最值

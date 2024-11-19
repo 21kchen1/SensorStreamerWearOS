@@ -19,8 +19,12 @@ import java.nio.charset.Charset;
  * */
 
 public class TCPLink extends Link {
-    //    发送和接收数据的 socket
-    private Socket socket;
+//    发送和接收数据的 socket
+    protected Socket socket;
+//    发送
+    protected PrintWriter socketSend;
+//    接收
+    protected BufferedReader socketRece;
 
     public TCPLink () {
         super();
@@ -41,6 +45,9 @@ public class TCPLink extends Link {
             this.charset = charset;
             this.socket = new Socket();
             this.socket.connect(new InetSocketAddress(address, port), timeout);
+
+            this.socketSend = new PrintWriter(new OutputStreamWriter(this.socket.getOutputStream(), this.charset), true);
+            this.socketRece = new BufferedReader(new InputStreamReader(socket.getInputStream(), this.charset));
         } catch (Exception e) {
             Log.d("TCPLink", "launch:Exception", e);
             this.launchFlag = true;
@@ -83,15 +90,13 @@ public class TCPLink extends Link {
      * 发送 buf 数据
      * */
     @Override
-    public void send(String msg) {
+    public synchronized void send(String msg) {
 //        1
         if (!this.canSend())
             return;
 
         try {
-            OutputStreamWriter writer = new OutputStreamWriter(this.socket.getOutputStream(), this.charset);
-            PrintWriter out = new PrintWriter(writer, true);
-            out.println(msg);
+            this.socketSend.println(msg);
         } catch (Exception e) {
             Log.e("TCPLink", "send:Exception", e);
             this.off();
@@ -102,16 +107,14 @@ public class TCPLink extends Link {
      * 接收并将数据存储在 buf
      * */
     @Override
-    public String rece(int bufSize, int timeLimit) {
+    public synchronized String rece(int bufSize, int timeLimit) {
 //        1
         if (!this.canRece())
             return null;
 
         try {
-            InputStreamReader reader = new InputStreamReader(socket.getInputStream(), this.charset);
-            BufferedReader in = new BufferedReader(reader);
-            return in.readLine();
-        } catch (IOException e) {
+            return this.socketRece.readLine();
+        } catch (Exception e) {
             Log.e("TCPLink", "rece:Exception", e);
             this.off();
             return null;

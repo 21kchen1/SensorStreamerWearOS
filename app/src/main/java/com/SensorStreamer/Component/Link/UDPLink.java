@@ -15,7 +15,7 @@ import java.nio.charset.Charset;
 
 public class UDPLink extends Link {
 //    发送和接收数据的 socket
-    private DatagramSocket sendSocket, receSocket;
+    protected DatagramSocket sendSocket, receSocket;
 
     public UDPLink () {
         super();
