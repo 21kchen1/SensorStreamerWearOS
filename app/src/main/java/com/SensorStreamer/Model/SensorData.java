@@ -1,12 +1,12 @@
 package com.SensorStreamer.Model;
 
 /**
- * IMU 数据结构
+ * Sensor 数据结构
  * @author chen
  * @version 1.0
  * */
 
-public class IMUData {
+public class SensorData {
     public long unixTimestamp;
     public long sensorTimestamp;
     public String sensorType;
@@ -18,7 +18,7 @@ public class IMUData {
      * @param sensorType 传感器类型
      * @param values 传感器数据
      * */
-    public IMUData(long unixTimestamp, long sensorTimestamp, String sensorType, float[] values) {
+    public SensorData(long unixTimestamp, long sensorTimestamp, String sensorType, float[] values) {
         this.unixTimestamp = unixTimestamp;
         this.sensorTimestamp = sensorTimestamp;
         this.sensorType = sensorType;

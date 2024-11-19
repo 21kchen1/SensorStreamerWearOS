@@ -17,7 +17,6 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * 带心跳机制的 TCP 的 Link
- *
  * @author chen
  * @version 2.0
  */
@@ -31,12 +30,12 @@ public class HTCPLink extends TCPLink {
     protected int receNum;
     //    socket 收信线程
     protected Thread socketThread;
+    //    往返时间，毫米单位
+    protected double RTT;
     //    同步锁
-    protected final Object socketLock, receNumLock;
+    protected final Object socketLock, receNumLock, RTTLock;
     //    心跳任务
     protected ScheduledExecutorService heartbeatService;
-    //    往返时间，毫米单位
-    protected long RTT;
 
     public HTCPLink() {
         super();
@@ -45,6 +44,7 @@ public class HTCPLink extends TCPLink {
         heartbeatQueue = new LinkedBlockingQueue<>();
         socketLock = new Object();
         receNumLock = new Object();
+        RTTLock = new Object();
 
         this.RTT = Link.INTNULL;
         this.receNum = Link.INTNULL;
@@ -280,12 +280,27 @@ public class HTCPLink extends TCPLink {
                         Log.e("HTCPLink", "startHeartbeat:reLaunch");
                         return;
                     }
-//                心跳正常
-                    this.RTT = stopTime - startTime;
+//                    心跳正常
+                    synchronized (this.RTTLock) {
+                        this.RTT = this.RTT * 0.3 + (stopTime - startTime) * 0.7;
+                    }
                     Log.i("HTCPLink", "Heartbeat: RTT = " + this.RTT);
 
                 }, 0, interTime, TimeUnit.MILLISECONDS
         );
+    }
+
+    /**
+     * 获取 RTT
+     * */
+    public double getRTT() {
+//        1
+        if (!this.canRece() || this.heartbeatService == null)
+            return Link.INTNULL;
+
+        synchronized (this.RTTLock) {
+            return this.RTT;
+        }
     }
 
     /**

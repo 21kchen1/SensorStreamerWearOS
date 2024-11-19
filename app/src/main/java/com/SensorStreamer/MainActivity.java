@@ -7,6 +7,7 @@ import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.support.wearable.activity.WearableActivity;
@@ -15,6 +16,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import androidx.annotation.RequiresApi;
 import androidx.core.content.ContextCompat;
 
 import com.SensorStreamer.Component.Link.HTCPLink;
@@ -24,14 +26,14 @@ import com.SensorStreamer.Component.Link.TCPLinkF;
 import com.SensorStreamer.Component.Link.UDPLinkF;
 import com.SensorStreamer.Component.Listen.AudioListen;
 import com.SensorStreamer.Component.Listen.AudioListenF;
-import com.SensorStreamer.Component.Listen.IMUListen;
-import com.SensorStreamer.Component.Listen.IMUListenF;
+import com.SensorStreamer.Component.Listen.SensorListen;
+import com.SensorStreamer.Component.Listen.SensorListenF;
 import com.SensorStreamer.Component.Switch.RemoteSwitch;
 import com.SensorStreamer.Component.Switch.RemoteSwitchF;
 import com.SensorStreamer.Component.Switch.Switch;
 import com.SensorStreamer.Component.Switch.SwitchF;
 import com.SensorStreamer.Model.AudioData;
-import com.SensorStreamer.Model.IMUData;
+import com.SensorStreamer.Model.SensorData;
 import com.SensorStreamer.Model.RemotePDU;
 import com.SensorStreamer.databinding.ActivityMainBinding;
 import com.google.gson.Gson;
@@ -48,9 +50,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * @// TODO: 2024/11/15 后续将ui的text改成表示当前系统状态的说明
- * */
+@RequiresApi(api = Build.VERSION_CODES.Q)
 public class MainActivity extends WearableActivity {
 
     private static final String LOG_TAG = "log tag";
@@ -65,18 +65,14 @@ public class MainActivity extends WearableActivity {
 
     // audio stuff
     int audioSamplingRate = 16000;
-
 //    服务器连接用
     private Link udpLink;
     private Link tcpLink;
-
     private HTCPLink htcpLink;
-
+    private AudioListen audioListen;
+    private SensorListen sensorListen;
 //    远程控制开关
     private Switch tcpRemoteSwitch;
-
-    private AudioListen audioListen;
-    private IMUListen imuListen;
 
     private PowerManager.WakeLock mWakeLock;
     private PowerManager powerManager;
@@ -89,7 +85,9 @@ public class MainActivity extends WearableActivity {
             Manifest.permission.ACCESS_FINE_LOCATION,
             Manifest.permission.ACCESS_COARSE_LOCATION,
             Manifest.permission.CHANGE_WIFI_STATE,
-            Manifest.permission.ACCESS_WIFI_STATE
+            Manifest.permission.ACCESS_WIFI_STATE,
+            Manifest.permission.BODY_SENSORS,
+            Manifest.permission.ACTIVITY_RECOGNITION,
     };
 
     private ScheduledExecutorService refreshUIService;
@@ -153,8 +151,8 @@ public class MainActivity extends WearableActivity {
 //        创建监听器
         AudioListenF audioListenF = new AudioListenF();
         audioListen = (AudioListen) audioListenF.create(this);
-        IMUListenF imuListenF = new IMUListenF();
-        imuListen = (IMUListen) imuListenF.create(this);
+        SensorListenF sensorListenF = new SensorListenF();
+        sensorListen = (SensorListen) sensorListenF.create(this);
 
 //        创建开关
         SwitchF remoteSwitchF = new RemoteSwitchF();
@@ -179,13 +177,13 @@ public class MainActivity extends WearableActivity {
     };
 
     /**
-     * IMU 回调函数
+     * Sensor 回调函数
      * */
-    private final IMUListen.IMUCallback imuCallback = new IMUListen.IMUCallback() {
+    private final SensorListen.SensorCallback sensorCallback = new SensorListen.SensorCallback() {
         @Override
-        public void dealIMUData(String type, float[] data, long sensorTimestamp) {
-            IMUData imuData = new IMUData(System.currentTimeMillis(), sensorTimestamp, type, data);
-            String json = gson.toJson(imuData);
+        public void dealSensorData(String type, float[] data, long sensorTimestamp) {
+            SensorData sensorData = new SensorData(System.currentTimeMillis(), sensorTimestamp, type, data);
+            String json = gson.toJson(sensorData);
 //            发送数据
             udpLink.send(json);
         }
@@ -211,24 +209,14 @@ public class MainActivity extends WearableActivity {
                 Sensor.TYPE_ACCELEROMETER,
                 Sensor.TYPE_GYROSCOPE,
                 Sensor.TYPE_ROTATION_VECTOR,
-                Sensor.TYPE_MAGNETIC_FIELD
+                Sensor.TYPE_MAGNETIC_FIELD,
         };
 //            启动相关组件
-        imuListen.launch(sensors,0 ,this.imuCallback);
+        sensorListen.launch(sensors,0 ,this.sensorCallback);
         audioListen.launch(audioSamplingRate, this.audioCallback);
 //            开始读取数据
-        imuListen.startRead();
+        sensorListen.startRead();
         audioListen.startRead();
-    }
-
-    /**
-     * 关闭传感器
-     * */
-    public void offSensor() {
-        imuListen.stopRead();
-        audioListen.stopRead();
-        imuListen.off();
-        audioListen.off();
     }
 
     public void test() {
@@ -239,6 +227,16 @@ public class MainActivity extends WearableActivity {
             System.out.println(Arrays.toString(a.data));
         });
         testTread.start();
+    }
+
+    /**
+     * 关闭传感器
+     * */
+    public void offSensor() {
+        sensorListen.stopRead();
+        audioListen.stopRead();
+        sensorListen.off();
+        audioListen.off();
     }
 
     /**
@@ -265,58 +263,62 @@ public class MainActivity extends WearableActivity {
         }
     };
 
+    /**
+     * 点击 connect 后执行
+     * */
+    private void connectClick() {
+        new Thread(() -> {
+            try {
+                String SERVER = ipAddr.getText().toString();
+                if (!htcpLink.launch(InetAddress.getByName(SERVER), tcpPort, 100, StandardCharsets.UTF_8) ||
+                        !udpLink.launch(InetAddress.getByName(SERVER), udpPort, 0, StandardCharsets.UTF_8) ||
+                        !tcpRemoteSwitch.launch(htcpLink, MainActivity.this.remoteCallback)) {
+                    disconnectClick();
+                    return;
+                }
+//                启动心跳
+                htcpLink.startHeartbeat(2000, 2000);
+//                启动远程开关
+                tcpRemoteSwitch.startListen(1024);
+//                启动通知
+                startService(MainActivity.this.intent);
+            } catch (UnknownHostException e) {
+                Log.e("MainActivity", "UnknownHostException", e);
+            }
+        }).start();
+    }
+
+    /**
+     * 点击 disconnect 或 connect 异常时执行
+     * */
+    private void disconnectClick() {
+        MainActivity.this.offSensor();
+        tcpRemoteSwitch.stopListen();
+        tcpRemoteSwitch.off();
+//        关闭连接，允许更新地址
+        if(!udpLink.off() || !htcpLink.off())
+            Log.e("MainActivity", "Link off error");
+        stopService(MainActivity.this.intent);
+        if (refreshUIService == null)
+            return;
+        refreshUIService.shutdown();
+    }
+
     private final View.OnClickListener startListener = new View.OnClickListener() {
         @Override
         public void onClick(View arg0) {
-            new Thread(() -> {
-                try {
-                    String SERVER = ipAddr.getText().toString();
-//                    if (!tcpLink.launch(InetAddress.getByName(SERVER), tcpPort, 2000, StandardCharsets.UTF_8))
-//                        return;
-                    if (!htcpLink.launch(InetAddress.getByName(SERVER), tcpPort, 100, StandardCharsets.UTF_8))
-                        return;
-                    htcpLink.startHeartbeat(2000, 2000);
-                    if (!udpLink.launch(InetAddress.getByName(SERVER), udpPort, 0, StandardCharsets.UTF_8))
-                        return;
-
-//                    启动远程开关
-//                    tcpRemoteSwitch.launch(tcpLink, MainActivity.this.remoteCallback);
-                    tcpRemoteSwitch.launch(htcpLink, MainActivity.this.remoteCallback);
-                    tcpRemoteSwitch.startListen(1024);
-
-
-//                    startService(MainActivity.this.intent);
-                } catch (UnknownHostException e) {
-                    Log.e("VS", "UnknownHostException", e);
-                }
-            }).start();
+            connectClick();
         }
     };
 
     private final View.OnClickListener stopListener = new View.OnClickListener() {
         @Override
         public void onClick(View arg0) {
-
-            MainActivity.this.offSensor();
-
-            tcpRemoteSwitch.stopListen();
-            tcpRemoteSwitch.off();
-
-            htcpLink.off();
-
-//            关闭连接，允许更新地址
-            if(!udpLink.off() || !tcpLink.off())
-                Log.e("MainActivity", "Link off error");
-            if (refreshUIService == null)
-                return;
-            refreshUIService.shutdown();
-
-            stopService(MainActivity.this.intent);
+            disconnectClick();
         }
     };
 
     private void wakeLockAcquire(){
-
         Timer timer = new Timer();
         TimerTask task = new TimerTask() {
             @Override

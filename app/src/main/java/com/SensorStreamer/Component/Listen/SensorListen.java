@@ -13,29 +13,29 @@ import java.util.HashMap;
 import java.util.List;
 
 /**
- * 读取 IMU 数据，并基于回调函数处理
+ * 读取 Sensor 数据，并基于回调函数处理
  * @author chen
  * @version 1.0
  * */
 
-public class IMUListen extends Listen {
+public class SensorListen extends Listen {
     /**
-     * IMU 回调函数类接口
+     * Sensor 回调函数类接口
      * */
-    public interface IMUCallback extends ListenCallback {
+    public interface SensorCallback extends ListenCallback {
         /**
          * 回调函数 用于处理数据
          * @param type Sensor 类型
          * @param data 传入 Sensor 数据
          * @param sensorTimestamp 与硬件绑定的时间戳
          * */
-        void dealIMUData(String type, float[] data, long sensorTimestamp);
+        void dealSensorData(String type, float[] data, long sensorTimestamp);
     }
 
     private final HashMap<Integer, String> sensorDir;
     private final int intNull;
 //    回调函数
-    private IMUCallback callback;
+    private SensorCallback callback;
 //    当采样率为 0 时 启动变化时传输数据
     private int samplingRate;
 //    需要监听的 sensor
@@ -44,14 +44,32 @@ public class IMUListen extends Listen {
     /**
      * 常量初始化
      * */
-    public IMUListen(Activity activity) {
+    public SensorListen(Activity activity) {
         super(activity);
 
         this.sensorDir = new HashMap<>();
-        this.sensorDir.put(Sensor.TYPE_ACCELEROMETER, "accel");
-        this.sensorDir.put(Sensor.TYPE_GYROSCOPE, "gyro");
-        this.sensorDir.put(Sensor.TYPE_ROTATION_VECTOR, "rotvec");
-        this.sensorDir.put(Sensor.TYPE_MAGNETIC_FIELD, "mag");
+        this.sensorDir.put(Sensor.TYPE_ACCELEROMETER, "ACCELEROMETER");
+        this.sensorDir.put(Sensor.TYPE_GYROSCOPE, "GYROSCOPE");
+        this.sensorDir.put(Sensor.TYPE_ROTATION_VECTOR, "ROTATION_VECTOR");
+        this.sensorDir.put(Sensor.TYPE_MAGNETIC_FIELD, "MAGNETIC_FIELD");
+        this.sensorDir.put(Sensor.TYPE_LIGHT, "LIGHT");
+        this.sensorDir.put(Sensor.TYPE_PRESSURE, "PRESSURE");
+        this.sensorDir.put(Sensor.TYPE_GRAVITY, "GRAVITY");
+        this.sensorDir.put(Sensor.TYPE_LINEAR_ACCELERATION, "LINEAR_ACCELERATION");
+        this.sensorDir.put(Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED, "MAGNETIC_FIELD_UNCALIBRATED");
+        this.sensorDir.put(Sensor.TYPE_GAME_ROTATION_VECTOR, "GAME_ROTATION_VECTOR");
+        this.sensorDir.put(Sensor.TYPE_GYROSCOPE_UNCALIBRATED, "GYROSCOPE_UNCALIBRATED");
+        this.sensorDir.put(Sensor.TYPE_LOW_LATENCY_OFFBODY_DETECT, "LOW_LATENCY_OFFBODY_DETECT");
+
+        this.sensorDir.put(Sensor.TYPE_PROXIMITY, "PROXIMITY");
+        this.sensorDir.put(Sensor.TYPE_RELATIVE_HUMIDITY, "RELATIVE_HUMIDITY");
+        this.sensorDir.put(Sensor.TYPE_AMBIENT_TEMPERATURE, "AMBIENT_TEMPERATURE");
+        this.sensorDir.put(Sensor.TYPE_POSE_6DOF, "POSE_6DOF");
+        this.sensorDir.put(Sensor.TYPE_STATIONARY_DETECT, "STATIONARY_DETECT");
+        this.sensorDir.put(Sensor.TYPE_MOTION_DETECT, "MOTION_DETECT");
+        this.sensorDir.put(Sensor.TYPE_HEART_BEAT, "HEART_BEAT");
+        this.sensorDir.put(Sensor.TYPE_ACCELEROMETER_UNCALIBRATED, "ACCELEROMETER_UNCALIBRATED");
+        this.sensorDir.put(65562, "HEART_BEAT");
     
         this.samplingRate = this.intNull = -1;
     }
@@ -62,7 +80,7 @@ public class IMUListen extends Listen {
      * @param samplingRate 采样率
      * @param callback 数据处理回调函数
      * */
-    public synchronized boolean launch(int[] sensors, int samplingRate, IMUCallback callback) {
+    public synchronized boolean launch(int[] sensors, int samplingRate, SensorCallback callback) {
 //        0 0
         if (!this.canLaunch()) return false;
         
@@ -97,20 +115,23 @@ public class IMUListen extends Listen {
                 continue;
             int type = Integer.parseInt(params[i]);
             Sensor sensor = this.sensorManager.getDefaultSensor(type);
-//            是否重复
-            if (this.sensors.contains(sensor))
+//            是否有效设备或重复
+            if (sensor == null || this.sensors.contains(sensor)) {
+                Log.i("SensorListen", "launch: The sensors are invalid or duplicate, senor = " + this.sensorDir.get(type));
                 continue;
+            }
+            Log.i("Test", "senor = " + this.sensorDir.get(type));
             this.sensors.add(sensor);
         }
 
-        this.callback = (IMUCallback) callback;
+        this.callback = (SensorCallback) callback;
 
 //        1 0
         return this.launchFlag = true;
     }
 
     /**
-     * 注销 IMU 监听组件
+     * 注销 Sensor 监听组件
      * @implNote 如果在调用 off 前有使用 startRead，必须先使用 stopRead
      * */
     @Override
@@ -132,9 +153,8 @@ public class IMUListen extends Listen {
     }
 
     /**
-     * 读取并使用回调函数处理 IMU 数据
+     * 读取并使用回调函数处理 Sensor 数据
      * 仅当采样率为零时启动 onSensorChanged
-     * @// TODO: 2024/11/7 还需要添加按采样率发送数据的程序，需要设置buf和大小
      * */
     @Override
     public synchronized void startRead() {
@@ -151,8 +171,7 @@ public class IMUListen extends Listen {
     }
 
     /**
-     * 停止处理 IMU 数据
-     * @// TODO: 2024/11/7 记得处理按采样率发送数据的程序
+     * 停止处理 Sensor 数据
      * */
     @Override
     public synchronized void stopRead() {
@@ -169,7 +188,7 @@ public class IMUListen extends Listen {
     }
 
     /**
-     * 当 IMU 数据变化时执行回调函数，仅当采样率为零时生效
+     * 当 Sensor 数据变化时执行回调函数，仅当采样率为零时生效
      * */
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
@@ -182,9 +201,9 @@ public class IMUListen extends Listen {
                 if (this.callback == null)
                     return;
 //                使用字典将 type 转换为 String
-                this.callback.dealIMUData(this.sensorDir.get(sensorEvent.sensor.getType()), sensorEvent.values, sensorEvent.timestamp);
+                this.callback.dealSensorData(this.sensorDir.get(sensorEvent.sensor.getType()), sensorEvent.values, sensorEvent.timestamp);
             } catch (Exception e) {
-                Log.e("IMUListen", "onSensorChanged:Exception", e);
+                Log.e("SensorListen", "onSensorChanged:Exception", e);
             }
         });
         readChangedThread.start();
