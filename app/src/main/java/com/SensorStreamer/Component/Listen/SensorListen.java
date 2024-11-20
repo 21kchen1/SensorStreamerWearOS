@@ -70,9 +70,13 @@ public class SensorListen extends Listen {
         this.sensorDir.put(Sensor.TYPE_MOTION_DETECT, "MOTION_DETECT");
         this.sensorDir.put(Sensor.TYPE_HEART_BEAT, "HEART_BEAT");
         this.sensorDir.put(Sensor.TYPE_ACCELEROMETER_UNCALIBRATED, "ACCELEROMETER_UNCALIBRATED");
-        this.sensorDir.put(65562, "HEART_BEAT");
+        this.sensorDir.put(69682, "HEART_BEAT");
     
         this.samplingRate = this.intNull = -1;
+
+        for (Sensor sensor : this.sensorManager.getSensorList(Sensor.TYPE_ALL)) {
+            Log.i(SensorListen.LOG_TAG ,"Support " + sensor.getName() + ", Type = " + sensor.getType());
+        }
     }
 
     /**

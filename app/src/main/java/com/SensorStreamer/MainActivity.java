@@ -7,7 +7,6 @@ import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -21,6 +20,7 @@ import android.widget.TextView;
 import androidx.core.content.ContextCompat;
 
 import com.SensorStreamer.Component.Link.HTCPLink;
+import com.SensorStreamer.Component.Link.HTCPLinkF;
 import com.SensorStreamer.Component.Link.Link;
 import com.SensorStreamer.Component.Link.LinkF;
 import com.SensorStreamer.Component.Link.UDPLinkF;
@@ -133,8 +133,8 @@ public class MainActivity extends WearableActivity {
 //        创建 Link 类
         LinkF udpLinkF = new UDPLinkF();
         udpLink = udpLinkF.create();
-//        心跳 TCP
-        htcpLink = new HTCPLink();
+        LinkF htcpLinkF = new HTCPLinkF();
+        htcpLink = (HTCPLink) htcpLinkF.create();
 //        创建监听器
         AudioListenF audioListenF = new AudioListenF();
         audioListen = (AudioListen) audioListenF.create(this);
@@ -155,9 +155,9 @@ public class MainActivity extends WearableActivity {
     @Override
     public void onBackPressed() {
         super.onBackPressed();
-        MainActivity.this.wakeLockRelease();
         MainActivity.this.offSensor();
         MainActivity.this.disconnectClick();
+        MainActivity.this.wakeLockRelease();
     }
 
     /**
@@ -192,10 +192,11 @@ public class MainActivity extends WearableActivity {
     public void launchSensor() {
 //                这里后面变成远程设置
         int[] sensors = new int[] {
-                Sensor.TYPE_ACCELEROMETER,
-                Sensor.TYPE_GYROSCOPE,
-                Sensor.TYPE_ROTATION_VECTOR,
-                Sensor.TYPE_MAGNETIC_FIELD,
+//                Sensor.TYPE_ACCELEROMETER,
+//                Sensor.TYPE_GYROSCOPE,
+//                Sensor.TYPE_ROTATION_VECTOR,
+//                Sensor.TYPE_MAGNETIC_FIELD,
+                69682
         };
 //            启动相关组件
         sensorListen.launch(sensors,0 ,this.sensorCallback);
@@ -261,7 +262,7 @@ public class MainActivity extends WearableActivity {
 //                启动通知
                 startForegroundService(MainActivity.this.sensorServiceIntent);
             } catch (UnknownHostException e) {
-                Log.e("MainActivity", "UnknownHostException", e);
+                Log.e(LOG_TAG, "connectClick:UnknownHostException", e);
             }
         }).start();
     }
@@ -275,7 +276,7 @@ public class MainActivity extends WearableActivity {
         tcpRemoteSwitch.off();
 //        关闭连接，允许更新地址
         if(!udpLink.off() || !htcpLink.off())
-            Log.e("MainActivity", "Link off error");
+            Log.e("MainActivity", "disconnectClick:Link off error");
         stopService(MainActivity.this.sensorServiceIntent);
     }
 
@@ -306,12 +307,12 @@ public class MainActivity extends WearableActivity {
             @Override
             public void run() {
                 if (mWakeLock != null){
-                    Log.e(LOG_TAG, "WakeLock already acquired!");
+                    Log.e(LOG_TAG, "wakeLockAcquire:WakeLock already acquired!");
                     return;
                 }
                 mWakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "sensors_data_logger:wakelock");
                 mWakeLock.acquire(600*60*1000L /*10 hours*/);
-                Log.i(LOG_TAG, "WakeLock acquired!");
+                Log.i(LOG_TAG, "wakeLockAcquire:WakeLock acquired!");
             }
         };
         timer.schedule(task, 2000);
@@ -323,11 +324,11 @@ public class MainActivity extends WearableActivity {
     private void wakeLockRelease(){
         if (mWakeLock != null && mWakeLock.isHeld()){
             mWakeLock.release();
-            Log.i(LOG_TAG, "WakeLock released!");
+            Log.i(LOG_TAG, "wakeLockRelease:WakeLock released!");
             mWakeLock = null;
         }
         else{
-            Log.e(LOG_TAG, "No wakeLock acquired!");
+            Log.e(LOG_TAG, "wakeLockRelease:No wakeLock acquired!");
         }
     }
 
@@ -340,4 +341,5 @@ public class MainActivity extends WearableActivity {
             }
         }
     }
+
 }

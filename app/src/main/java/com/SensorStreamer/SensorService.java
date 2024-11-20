@@ -27,7 +27,7 @@ public class SensorService extends Service {
 //    创建通知栏
     private Notification createNotification() {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setSmallIcon(R.drawable.streamers)
+                .setSmallIcon(R.mipmap.ic_launcher_round)
                 .setContentTitle("Sensor Streamer")
                 .setContentText("Prepare for stream sensors data...")
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT);
