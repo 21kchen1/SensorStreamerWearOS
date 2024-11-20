@@ -32,6 +32,7 @@ public class SensorListen extends Listen {
         void dealSensorData(String type, float[] data, long sensorTimestamp);
     }
 
+    private final static String LOG_TAG = "SensorListen";
     private final HashMap<Integer, String> sensorDir;
     private final int intNull;
 //    回调函数
@@ -117,10 +118,9 @@ public class SensorListen extends Listen {
             Sensor sensor = this.sensorManager.getDefaultSensor(type);
 //            是否有效设备或重复
             if (sensor == null || this.sensors.contains(sensor)) {
-                Log.i("SensorListen", "launch: The sensors are invalid or duplicate, senor = " + this.sensorDir.get(type));
+                Log.i(SensorListen.LOG_TAG, "launch: The sensors are invalid or duplicate. SenorType = " + this.sensorDir.get(type));
                 continue;
             }
-            Log.i("Test", "senor = " + this.sensorDir.get(type));
             this.sensors.add(sensor);
         }
 
@@ -203,7 +203,7 @@ public class SensorListen extends Listen {
 //                使用字典将 type 转换为 String
                 this.callback.dealSensorData(this.sensorDir.get(sensorEvent.sensor.getType()), sensorEvent.values, sensorEvent.timestamp);
             } catch (Exception e) {
-                Log.e("SensorListen", "onSensorChanged:Exception", e);
+                Log.e(SensorListen.LOG_TAG, "onSensorChanged:Exception", e);
             }
         });
         readChangedThread.start();

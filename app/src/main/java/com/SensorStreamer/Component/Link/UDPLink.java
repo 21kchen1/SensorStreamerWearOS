@@ -14,6 +14,7 @@ import java.nio.charset.Charset;
  * */
 
 public class UDPLink extends Link {
+    private final static String LOG_TAG = "UDPLink";
 //    发送和接收数据的 socket
     protected DatagramSocket sendSocket, receSocket;
 
@@ -39,7 +40,7 @@ public class UDPLink extends Link {
 //            接收用初始化 固定接收对应地址端口的信息
             this.receSocket = new DatagramSocket(this.port);
         } catch (Exception e) {
-            Log.d("UDPLink", "launch:Exception", e);
+            Log.d(UDPLink.LOG_TAG, "launch:Exception", e);
             this.launchFlag = true;
             this.off();
             return false;
@@ -72,7 +73,7 @@ public class UDPLink extends Link {
             this.port = Link.INTNULL;
             this.charset = null;
         } catch (Exception e) {
-            Log.d("UDPLink", "off:Exception", e);
+            Log.d(UDPLink.LOG_TAG, "off:Exception", e);
             return false;
         }
 
@@ -95,7 +96,7 @@ public class UDPLink extends Link {
             DatagramPacket packet = new DatagramPacket(buf, buf.length, this.address, this.port);
             this.sendSocket.send(packet);
         } catch (Exception e) {
-            Log.e("UDPLink", "send:Exception", e);
+            Log.e(UDPLink.LOG_TAG, "send:Exception", e);
             this.off();
         }
     }
@@ -127,7 +128,7 @@ public class UDPLink extends Link {
 
             return new String(packet.getData(), packet.getOffset(), packet.getLength(), this.charset);
         } catch (Exception e) {
-            Log.e("UDPLink", "rece:Exception", e);
+            Log.e(UDPLink.LOG_TAG, "rece:Exception", e);
             this.off();
             return null;
         }

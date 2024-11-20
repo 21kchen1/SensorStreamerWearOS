@@ -13,6 +13,7 @@ import com.google.gson.JsonSyntaxException;
  * */
 
 public class TypeTranDeter {
+    private final static String LOG_TAG = "TypeTranDeter";
     private static final Gson gson = new Gson();
 
     public static boolean canStr2Num(String str) {
@@ -20,7 +21,7 @@ public class TypeTranDeter {
             Integer.parseInt(str);
             return true;
         } catch (NumberFormatException e) {
-            Log.e("TypeTranDeter", "canStr2Num:NumberFormatException", e);
+            Log.e(TypeTranDeter.LOG_TAG, "canStr2Num:NumberFormatException", e);
             return false;
         }
     }
@@ -30,7 +31,7 @@ public class TypeTranDeter {
             gson.fromJson(str, object);
             return true;
         } catch (JsonSyntaxException e) {
-            Log.e("TypeTranDeter", "canStr2JsonData:JsonSyntaxException", e);
+            Log.e(TypeTranDeter.LOG_TAG, "canStr2JsonData:JsonSyntaxException", e);
             return false;
         }
     }

@@ -48,17 +48,15 @@ import java.util.TimerTask;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 @RequiresApi(api = Build.VERSION_CODES.Q)
 public class MainActivity extends WearableActivity {
 
-    private static final String LOG_TAG = "log tag";
+    private static final String LOG_TAG = "MainActivity";
 
     private TextView ipAddr;
-//    留着后续更新 ui
     private TextView unixTimeText;
-    private AtomicBoolean mIsRecording = new AtomicBoolean(false);
+
     private final int udpPort = 5005;
     private final int tcpPort = 5006;
     private final Gson gson = new Gson();
@@ -69,14 +67,24 @@ public class MainActivity extends WearableActivity {
     private Link udpLink;
     private Link tcpLink;
     private HTCPLink htcpLink;
+//    监视器
     private AudioListen audioListen;
     private SensorListen sensorListen;
+
+//    服务器发布开始指令附带的时间戳
+    private long ServiceStartTimestamp;
+//    客户端接收到开始指令时的时间戳
+    private long ClientStartTimestamp;
+//    客户端接收到开始指令时的RTT
+    private long ClientStartRTT;
+
 //    远程控制开关
     private Switch tcpRemoteSwitch;
-
+//    系统锁
     private PowerManager.WakeLock mWakeLock;
     private PowerManager powerManager;
 
+//    动态获取服务权限
     private final static int REQUEST_CODE_ANDROID = 1001;
     private static final String[] REQUIRED_PERMISSIONS = new String[] {
             Manifest.permission.WRITE_EXTERNAL_STORAGE,
@@ -107,12 +115,10 @@ public class MainActivity extends WearableActivity {
 
     @Override
     public void onBackPressed() {
-        // nullify back button when recording starts
-        if (!mIsRecording.get()) {
-            super.onBackPressed();
-            MainActivity.this.offSensor();
-            wakeLockRelease();
-        }
+        super.onBackPressed();
+        wakeLockRelease();
+        MainActivity.this.offSensor();
+        MainActivity.this.disconnectClick();
     }
 
     @Override
@@ -329,7 +335,7 @@ public class MainActivity extends WearableActivity {
                 }
                 mWakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "sensors_data_logger:wakelock");
                 mWakeLock.acquire(600*60*1000L /*10 hours*/);
-                Log.e(LOG_TAG, "WakeLock acquired!");
+                Log.i(LOG_TAG, "WakeLock acquired!");
             }
         };
         timer.schedule(task, 2000);
@@ -338,7 +344,7 @@ public class MainActivity extends WearableActivity {
     private void wakeLockRelease(){
         if (mWakeLock != null && mWakeLock.isHeld()){
             mWakeLock.release();
-            Log.e(LOG_TAG, "WakeLock released!");
+            Log.i(LOG_TAG, "WakeLock released!");
             mWakeLock = null;
         }
         else{

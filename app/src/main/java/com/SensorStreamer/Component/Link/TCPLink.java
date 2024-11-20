@@ -3,7 +3,6 @@ package com.SensorStreamer.Component.Link;
 import android.util.Log;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
@@ -19,6 +18,7 @@ import java.nio.charset.Charset;
  * */
 
 public class TCPLink extends Link {
+    private final static String LOG_TAG = "TCPLink";
 //    发送和接收数据的 socket
     protected Socket socket;
 //    发送
@@ -49,7 +49,7 @@ public class TCPLink extends Link {
             this.socketSend = new PrintWriter(new OutputStreamWriter(this.socket.getOutputStream(), this.charset), true);
             this.socketRece = new BufferedReader(new InputStreamReader(socket.getInputStream(), this.charset));
         } catch (Exception e) {
-            Log.d("TCPLink", "launch:Exception", e);
+            Log.d(TCPLink.LOG_TAG, "launch:Exception", e);
             this.launchFlag = true;
             this.off();
             return false;
@@ -77,7 +77,7 @@ public class TCPLink extends Link {
             this.address = null;
             this.port = Link.INTNULL;
         } catch (Exception e) {
-            Log.d("TCPLink", "off:Exception", e);
+            Log.d(TCPLink.LOG_TAG, "off:Exception", e);
             return false;
         }
 
@@ -98,7 +98,7 @@ public class TCPLink extends Link {
         try {
             this.socketSend.println(msg);
         } catch (Exception e) {
-            Log.e("TCPLink", "send:Exception", e);
+            Log.e(TCPLink.LOG_TAG, "send:Exception", e);
             this.off();
         }
     }
@@ -115,7 +115,7 @@ public class TCPLink extends Link {
         try {
             return this.socketRece.readLine();
         } catch (Exception e) {
-            Log.e("TCPLink", "rece:Exception", e);
+            Log.e(TCPLink.LOG_TAG, "rece:Exception", e);
             this.off();
             return null;
         }

@@ -22,6 +22,7 @@ import java.util.concurrent.TimeUnit;
  */
 
 public class HTCPLink extends TCPLink {
+    private final static String LOG_TAG = "HTCPLink";
     //    心跳标记
     protected final static String HEARTBEAT = "heartbeat";
     //    主阻塞队列
@@ -71,7 +72,7 @@ public class HTCPLink extends TCPLink {
 //            允许接收
             this.startSocketRece();
         } catch (Exception e) {
-            Log.d("TCPLink", "launch:Exception", e);
+            Log.d(HTCPLink.LOG_TAG, "launch:Exception", e);
             this.launchFlag = true;
             this.off();
             return false;
@@ -107,7 +108,7 @@ public class HTCPLink extends TCPLink {
             this.receNum = Link.INTNULL;
 
         } catch (Exception e) {
-            Log.d("HTCPLink", "off:Exception", e);
+            Log.d(HTCPLink.LOG_TAG, "off:Exception", e);
             return false;
         }
 
@@ -142,18 +143,18 @@ public class HTCPLink extends TCPLink {
                         while (true) {
 //                            获取数字锁
                             synchronized (this.receNumLock) {
-                                Log.i("HTCPLink", "receNum = " + this.receNum);
+                                Log.i(HTCPLink.LOG_TAG, "receNum = " + this.receNum);
                                 if (this.receNum > Link.INTNULL)
                                     break;
                             }
-                            Log.i("HTCPLink", "socketLock = lock on");
+                            Log.i(HTCPLink.LOG_TAG, "socketLock = lock on");
                             this.socketLock.wait();
-                            Log.i("HTCPLink", "socketLock = lock off");
+                            Log.i(HTCPLink.LOG_TAG, "socketLock = lock off");
                         }
                     }
 //                    执行任务
                     String msg = this.socketRece.readLine();
-                    Log.i("HTCPLink", "socketRece = " + msg);
+                    Log.i(HTCPLink.LOG_TAG, "socketRece = " + msg);
 //                    如果是心跳信号
                     if (HTCPLink.HEARTBEAT.equals(msg)) {
                         if (this.heartbeatQueue.remainingCapacity() == 0)
@@ -167,10 +168,10 @@ public class HTCPLink extends TCPLink {
                     this.receQueue.put(msg);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
-                    Log.e("HTCPLink", "startSocketRece:InterruptedException", e);
+                    Log.e(HTCPLink.LOG_TAG, "startSocketRece:InterruptedException", e);
                     break;
                 } catch (Exception e) {
-                    Log.e("HTCPLink", "startSocketRece:Exception", e);
+                    Log.e(HTCPLink.LOG_TAG, "startSocketRece:Exception", e);
                     break;
                 }
             }
@@ -183,7 +184,7 @@ public class HTCPLink extends TCPLink {
      * 从心跳队列获取信息
      */
     protected String heartbeatRece(int timeLimit) {
-        Log.i("HTCPLink", "Using heartbeatRece");
+        Log.i(HTCPLink.LOG_TAG, "Using heartbeatRece");
 //        1
         if (!this.canRece())
             return null;
@@ -205,7 +206,7 @@ public class HTCPLink extends TCPLink {
 
             return msg;
         } catch (Exception e) {
-            Log.e("HTCPLink", "heartbeatRece:Exception", e);
+            Log.e(HTCPLink.LOG_TAG, "heartbeatRece:Exception", e);
             return null;
         } finally {
             synchronized (this.receNumLock) {
@@ -220,7 +221,7 @@ public class HTCPLink extends TCPLink {
      */
     @Override
     public String rece(int bufSize, int timeLimit) {
-        Log.i("HTCPLink", "Using rece");
+        Log.i(HTCPLink.LOG_TAG, "Using rece");
 //        1
         if (!this.canRece()) {
             return null;
@@ -243,7 +244,7 @@ public class HTCPLink extends TCPLink {
 
             return msg;
         } catch (Exception e) {
-            Log.e("HTCPLink", "rece:Exception", e);
+            Log.e(HTCPLink.LOG_TAG, "rece:Exception", e);
             return null;
         } finally {
             synchronized (this.receNumLock) {
@@ -277,14 +278,14 @@ public class HTCPLink extends TCPLink {
                         boolean result = this.reLaunch(timeLimit);
                         if (!result) return;
                         this.startHeartbeat(timeLimit, interTime);
-                        Log.e("HTCPLink", "startHeartbeat:reLaunch");
+                        Log.e(HTCPLink.LOG_TAG, "startHeartbeat:reLaunch");
                         return;
                     }
 //                    心跳正常
                     synchronized (this.RTTLock) {
                         this.RTT = this.RTT * 0.3 + (stopTime - startTime) * 0.7;
                     }
-                    Log.i("HTCPLink", "Heartbeat: RTT = " + this.RTT);
+                    Log.i(HTCPLink.LOG_TAG, "Heartbeat: RTT = " + this.RTT);
 
                 }, 0, interTime, TimeUnit.MILLISECONDS
         );

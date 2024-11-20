@@ -28,6 +28,7 @@ public class AudioListen extends Listen {
         void dealAudioData(byte[] data);
     }
 
+    private final static String LOG_TAG = "AudioListen";
     private final int intNull;
 //    回调函数
     private AudioCallback callback;
@@ -126,7 +127,7 @@ public class AudioListen extends Listen {
                     this.callback.dealAudioData(buf);
                 }
             } catch (Exception e) {
-                Log.e("AudioListen", "startRead.readThread:Exception", e);
+                Log.e(AudioListen.LOG_TAG, "startRead.readThread:Exception", e);
                 this.stopRead();
             }
         });

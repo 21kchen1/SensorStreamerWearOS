@@ -23,6 +23,7 @@ public class RemoteSwitch extends Switch {
         void switchOff();
     }
 
+    private final static String LOG_TAG = "RemoteSwitch";
 //    回调函数
     private RemoteCallback callback;
 //    连接
@@ -107,7 +108,7 @@ public class RemoteSwitch extends Switch {
                 }
             }
             catch (Exception e) {
-                Log.e("RemoteSwitch", "startListen.listenThread:Exception", e);
+                Log.e(RemoteSwitch.LOG_TAG, "startListen.listenThread:Exception", e);
             } finally {
                 this.stopListen();
             }
