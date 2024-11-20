@@ -30,13 +30,13 @@ public class RemotePDU {
 //    信息类型
     public String type;
 //    时间
-    public String time;
+    public long time;
 //    命令
     public String control;
 //    数据
     public String[] data;
 
-    public RemotePDU(String type, String time, String control, String[] data) {
+    public RemotePDU(String type, long time, String control, String[] data) {
         this.type = type;
         this.time = time;
         this.control = control;

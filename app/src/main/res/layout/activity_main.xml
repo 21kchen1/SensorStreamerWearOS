@@ -9,51 +9,55 @@
     tools:deviceIds="wear">
 
     <Button
-        android:id="@+id/StartStreaming"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Start streaming"
-        app:layout_constraintBottom_toTopOf="@+id/StopStreaming"
+        android:id="@+id/Connect"
+        android:layout_width="140dp"
+        android:layout_height="50dp"
+        android:text="@string/button_connect"
+        app:layout_constraintBottom_toTopOf="@+id/Disconnect"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="1.0" />
 
     <Button
-        android:id="@+id/StopStreaming"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="48dp"
-        android:text="Stop streaming"
+        android:id="@+id/Disconnect"
+        android:layout_width="140dp"
+        android:layout_height="50dp"
+        android:layout_marginBottom="44dp"
+        android:text="@string/button_disconnect"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.492"
+        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent" />
 
     <EditText
-        android:id="@+id/ipAddr"
-        android:layout_width="147dp"
-        android:layout_height="48dp"
+        android:id="@+id/ip"
+        android:layout_width="150dp"
+        android:layout_height="50dp"
+        android:autofillHints="@string/text_IP_default"
         android:ems="10"
         android:foregroundGravity="center_horizontal"
         android:inputType="text"
-        android:text="192.168.1.100"
+        android:text="@string/text_IP_default"
         android:textAlignment="center"
-        app:layout_constraintBottom_toTopOf="@+id/StartStreaming"
+        app:layout_constraintBottom_toTopOf="@+id/Connect"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.525"
+        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.8" />
+        app:layout_constraintVertical_bias="0.90" />
 
     <TextView
-        android:id="@+id/unixTime"
+        android:id="@+id/info"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="1dp"
-        android:text="unixTime"
+        android:text="@string/text_info_default"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.497"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/StopStreaming" />
+        app:layout_constraintTop_toBottomOf="@+id/Disconnect"
+        app:layout_constraintVertical_bias="0.25" />
 </androidx.constraintlayout.widget.ConstraintLayout>

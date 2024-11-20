@@ -1,8 +1,12 @@
 <resources>
     <string name="app_name">Sensor Streamer</string>
-    <!--
-    This string is used for square devices and overridden by hello_world in
-    values-round/strings.xml for round devices.
-    -->
-    <string name="hello_world">Hello Square World!</string>
+
+    <string name="button_connect">Connect</string>
+    <string name="button_disconnect">Disconnect</string>
+    <string name="text_IP_default">192.168.1.100</string>
+
+    <string name="text_info_default">Be Ready</string>
+    <string name="text_info_connected">Connected</string>
+    <string name="text_info_fail">Connect Fail</string>
+
 </resources>

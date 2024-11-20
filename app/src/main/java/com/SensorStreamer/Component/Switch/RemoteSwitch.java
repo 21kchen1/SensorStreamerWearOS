@@ -19,8 +19,8 @@ public class RemoteSwitch extends Switch {
      * Remote 回调函数类接口
      * */
     public interface RemoteCallback extends SwitchCallback {
-        void switchOn();
-        void switchOff();
+        void switchOn(RemotePDU remotePDU);
+        void switchOff(RemotePDU remotePDU);
     }
 
     private final static String LOG_TAG = "RemoteSwitch";
@@ -97,11 +97,11 @@ public class RemoteSwitch extends Switch {
 //                    根据类型执行回调函数
                     switch (remotePDU.control) {
                         case RemotePDU.CONTROL_SWITCHON: {
-                            this.callback.switchOn();
+                            this.callback.switchOn(remotePDU);
                             break;
                         }
                         case RemotePDU.CONTROL_SWITCHOFF: {
-                            this.callback.switchOff();
+                            this.callback.switchOff(remotePDU);
                             break;
                         }
                     }

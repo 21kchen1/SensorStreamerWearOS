@@ -14,6 +14,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 带心跳机制的 TCP 的 Link
@@ -257,12 +258,19 @@ public class HTCPLink extends TCPLink {
     /**
      * 心跳
      * @param timeLimit 心跳最长响应时间，毫秒单位
+     * @param numLimit 连续超时的最大次数
      * @param interTime 心跳间隔，毫秒单位
      */
-    public synchronized void startHeartbeat(int timeLimit, int interTime) {
+    public synchronized void startHeartbeat(int timeLimit, int numLimit, int interTime) {
 //        1
         if (!this.canRece() || this.heartbeatService != null)
             return;
+
+        if (timeLimit <= Link.INTNULL || numLimit <= Link.INTNULL || interTime <= Link.INTNULL)
+            return;
+
+//        连续超时次数
+        AtomicInteger timeOutNum = new AtomicInteger();
 
         this.heartbeatService = Executors.newSingleThreadScheduledExecutor();
         this.heartbeatService.scheduleWithFixedDelay(
@@ -273,22 +281,26 @@ public class HTCPLink extends TCPLink {
                     String msg = this.heartbeatRece(timeLimit);
                     long stopTime = System.currentTimeMillis();
 
-//                    心跳超时则尝试重连
-                    if (!HTCPLink.HEARTBEAT.equals(msg)) {
+//                    心跳超时且超过次数限制
+                    if (!HTCPLink.HEARTBEAT.equals(msg) && timeOutNum.addAndGet(1) > numLimit) {
+                        Log.i(HTCPLink.LOG_TAG, "startHeartbeat: " + numLimit + "consecutive timeouts, relaunch now");
                         boolean result = this.reLaunch(timeLimit);
-                        if (!result) return;
-                        this.startHeartbeat(timeLimit, interTime);
-                        Log.e(HTCPLink.LOG_TAG, "startHeartbeat:reLaunch");
+                        if (!result) {
+                            Log.e(HTCPLink.LOG_TAG, "startHeartbeat: relaunch fail");
+                            return;
+                        }
+                        this.startHeartbeat(timeLimit, numLimit, interTime);
                         return;
                     }
 //                    心跳正常
+                    timeOutNum.set(0);
                     synchronized (this.RTTLock) {
-                        this.RTT = this.RTT * 0.3 + (stopTime - startTime) * 0.7;
+                        if (this.RTT == Link.INTNULL)
+                            this.RTT = stopTime - startTime;
+                        else this.RTT = this.RTT * 0.5 + (stopTime - startTime) * 0.5;
                     }
                     Log.i(HTCPLink.LOG_TAG, "Heartbeat: RTT = " + this.RTT);
-
-                }, 0, interTime, TimeUnit.MILLISECONDS
-        );
+                }, 0, interTime, TimeUnit.MILLISECONDS);
     }
 
     /**
