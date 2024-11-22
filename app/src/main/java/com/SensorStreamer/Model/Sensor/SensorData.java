@@ -1,4 +1,4 @@
-package com.SensorStreamer.Model;
+package com.SensorStreamer.Model.Sensor;
 
 /**
  * Sensor 数据结构

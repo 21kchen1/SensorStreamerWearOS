@@ -16,12 +16,27 @@ import androidx.core.app.NotificationCompat;
  */
 public class SensorService extends Service {
     private static final String CHANNEL_ID = "sensor_streamer_channel";
+    public static  final String ACTION_STOP_FORE = "action_stop_fore";
+    public static  final String ACTION_START_FORE = "action_start_fore";
+//    通知
+    private Notification notification;
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        startForeground(1, createNotification());
+        if (intent == null)
+            return START_NOT_STICKY;
 
-        return START_STICKY;
+        if (SensorService.ACTION_STOP_FORE.equals(intent.getAction())) {
+            stopForeground(true);
+            return START_NOT_STICKY;
+        }
+
+        if (SensorService.ACTION_START_FORE.equals(intent.getAction())) {
+            startForeground(1, this.notification);
+            return START_STICKY;
+        }
+
+        return START_NOT_STICKY;
     }
 
 //    创建通知栏
@@ -29,7 +44,7 @@ public class SensorService extends Service {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setSmallIcon(R.mipmap.ic_launcher_round)
                 .setContentTitle("Sensor Streamer")
-                .setContentText("Prepare for stream sensors data...")
+                .setContentText("Streaming sensors data...")
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT);
 
         return builder.build();
@@ -48,6 +63,8 @@ public class SensorService extends Service {
 //        管理者
         NotificationManager notificationManager = getSystemService(NotificationManager.class);
         notificationManager.createNotificationChannel(channel);
+//        创建通知栏
+        this.notification = createNotification();
     }
 
     @Override

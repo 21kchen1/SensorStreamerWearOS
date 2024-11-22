@@ -1,4 +1,4 @@
-package com.SensorStreamer.Model;
+package com.SensorStreamer.Model.Switch;
 
 /**
  * 通信数据单元与变量字典

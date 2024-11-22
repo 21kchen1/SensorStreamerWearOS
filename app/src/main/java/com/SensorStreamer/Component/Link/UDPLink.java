@@ -26,7 +26,7 @@ public class UDPLink extends Link {
      * 注册所有可变成员变量，设置目的地址
      * */
     @Override
-    public synchronized boolean launch(InetAddress address, int port, int timeout, Charset charset) {
+    public synchronized boolean launch(InetAddress address, int port, int timeout, Charset charset) throws Exception {
 //        0
         if (!this.canLaunch())
             return false;
@@ -43,7 +43,7 @@ public class UDPLink extends Link {
             Log.d(UDPLink.LOG_TAG, "launch:Exception", e);
             this.launchFlag = true;
             this.off();
-            return false;
+            throw e;
         }
 
 //        1
@@ -86,7 +86,7 @@ public class UDPLink extends Link {
      * 发送 buf 数据
      * */
     @Override
-    public void send(String msg) {
+    public void send(String msg) throws Exception {
 //        1
         if (!this.canSend())
             return;
@@ -98,6 +98,7 @@ public class UDPLink extends Link {
         } catch (Exception e) {
             Log.e(UDPLink.LOG_TAG, "send:Exception", e);
             this.off();
+            throw e;
         }
     }
 
@@ -105,12 +106,12 @@ public class UDPLink extends Link {
      * 接收并将数据存储在 buf
      * */
     @Override
-    public String rece(int bufSize, int timeLimit) {
+    public String rece(int bufSize, int timeLimit) throws Exception {
 //        1
         if (!this.canRece())
             return null;
 
-        if (bufSize < this.minBufSize)
+        if (bufSize < Link.MIN_BUF_SIZE)
             bufSize = this.bufSize;
 
         try {
@@ -130,7 +131,7 @@ public class UDPLink extends Link {
         } catch (Exception e) {
             Log.e(UDPLink.LOG_TAG, "rece:Exception", e);
             this.off();
-            return null;
+            throw e;
         }
     }
 
@@ -140,10 +141,10 @@ public class UDPLink extends Link {
     @Override
     protected synchronized void adaptiveBufSize(int packetSize) {
         if (packetSize > this.bufSize) {
-            this.bufSize = Math.min(this.maxBufSize, (this.bufSize << 1));
+            this.bufSize = Math.min(Link.MAX_BUF_SIZE, (this.bufSize << 1));
             return;
         }
         if (packetSize < (this.bufSize >> 2))
-            this.bufSize = Math.max(this.minBufSize, (this.bufSize >> 1));
+            this.bufSize = Math.max(Link.MIN_BUF_SIZE, (this.bufSize >> 1));
     }
 }

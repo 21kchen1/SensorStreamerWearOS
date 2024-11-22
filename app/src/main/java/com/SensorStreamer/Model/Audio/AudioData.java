@@ -1,4 +1,4 @@
-package com.SensorStreamer.Model;
+package com.SensorStreamer.Model.Audio;
 
 /**
  * 音频数据结构

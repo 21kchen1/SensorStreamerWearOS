@@ -1,21 +1,22 @@
 package com.SensorStreamer.Component.Link;
 
+import com.google.gson.Gson;
+
 import java.net.InetAddress;
 import java.nio.charset.Charset;
-import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Link 抽象类
  * @author chen
  * @version 1.2
- * @// TODO: 2024/11/15 记得加timeout，超时就告诉普通rece，取消从队列获取数据
  * */
 
 public abstract class Link {
     public final static int INTNULL = 0;
 
+    protected final static Gson gson = new Gson();
 //    缓存最值
-    protected final int maxBufSize, minBufSize;
+    protected final static int MAX_BUF_SIZE = 65536, MIN_BUF_SIZE = 128;
 
     protected boolean launchFlag;
     protected InetAddress address;
@@ -32,9 +33,6 @@ public abstract class Link {
      * */
     public Link() {
         this.launchFlag = false;
-
-        this.maxBufSize = 65536;
-        this.minBufSize = 128;
         this.bufSize = 1024;
 
     }
@@ -47,7 +45,7 @@ public abstract class Link {
      * @param charset 编码集
      * @return 是否注册成功
      * */
-    public abstract boolean launch(InetAddress address, int port, int timeout, Charset charset);
+    public abstract boolean launch(InetAddress address, int port, int timeout, Charset charset) throws Exception;
 
     /**
      * 注销组件
@@ -59,16 +57,26 @@ public abstract class Link {
      * 发信
      * @param msg 数据
      * */
-    public abstract void send(String msg);
+    public abstract void send(String msg) throws Exception;
 
     /**
-     * 收息
+     * 收信
      * @param bufSize 缓存大小
      * @param timeLimit 接收时间限制，毫秒为单位
      * @return 数据
      * */
-    public abstract String rece(int bufSize, int timeLimit);
+    public abstract String rece(int bufSize, int timeLimit) throws Exception;
 
+    /**
+     * 收信 Hooks
+     * @param bufSize 缓存大小
+     * @param timeLimit 接收时间限制，毫秒为单位
+     * @param param 特殊参数
+     * @return 数据
+     * */
+    public String structRece(int bufSize, int timeLimit, String... param) throws Exception {
+        return this.rece(bufSize, timeLimit);
+    }
 
     /**
      * 自适应缓冲大小设置

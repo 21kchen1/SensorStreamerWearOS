@@ -56,7 +56,7 @@ public class HTCPLink extends TCPLink {
      * 注册所有可变成员变量，设置目的地址
      * */
     @Override
-    public synchronized boolean launch(InetAddress address, int port, int timeout, Charset charset) {
+    public synchronized boolean launch(InetAddress address, int port, int timeout, Charset charset) throws Exception {
 //        0
         if (!this.canLaunch())
             return false;
@@ -76,7 +76,7 @@ public class HTCPLink extends TCPLink {
             Log.d(HTCPLink.LOG_TAG, "launch:Exception", e);
             this.launchFlag = true;
             this.off();
-            return false;
+            throw e;
         }
 
 //        1
@@ -129,7 +129,12 @@ public class HTCPLink extends TCPLink {
             return false;
 
         this.off();
-        return this.launch(this.address, this.port, timeLimit, this.charset);
+        try {
+            return this.launch(this.address, this.port, timeLimit, this.charset);
+        } catch (Exception e) {
+            Log.e(LOG_TAG, "reLaunch:Exception", e);
+            return false;
+        }
     }
 
     /**
@@ -184,7 +189,7 @@ public class HTCPLink extends TCPLink {
     /**
      * 从心跳队列获取信息
      */
-    protected String heartbeatRece(int timeLimit) {
+    protected String heartbeatRece(int timeLimit) throws Exception {
         Log.i(HTCPLink.LOG_TAG, "Using heartbeatRece");
 //        1
         if (!this.canRece())
@@ -208,7 +213,7 @@ public class HTCPLink extends TCPLink {
             return msg;
         } catch (Exception e) {
             Log.e(HTCPLink.LOG_TAG, "heartbeatRece:Exception", e);
-            return null;
+            throw e;
         } finally {
             synchronized (this.receNumLock) {
                 if (this.receNum > Link.INTNULL)
@@ -221,7 +226,7 @@ public class HTCPLink extends TCPLink {
      * 接收并将数据存储在 buf
      */
     @Override
-    public String rece(int bufSize, int timeLimit) {
+    public String rece(int bufSize, int timeLimit) throws Exception {
         Log.i(HTCPLink.LOG_TAG, "Using rece");
 //        1
         if (!this.canRece()) {
@@ -246,7 +251,7 @@ public class HTCPLink extends TCPLink {
             return msg;
         } catch (Exception e) {
             Log.e(HTCPLink.LOG_TAG, "rece:Exception", e);
-            return null;
+            throw e;
         } finally {
             synchronized (this.receNumLock) {
                 if (this.receNum > Link.INTNULL)
@@ -275,31 +280,35 @@ public class HTCPLink extends TCPLink {
         this.heartbeatService = Executors.newSingleThreadScheduledExecutor();
         this.heartbeatService.scheduleWithFixedDelay(
                 () -> {
+                    try {
 //                   发送心跳信息
-                    this.send(HTCPLink.HEARTBEAT);
-                    long startTime = System.currentTimeMillis();
-                    String msg = this.heartbeatRece(timeLimit);
-                    long stopTime = System.currentTimeMillis();
+                        this.send(HTCPLink.HEARTBEAT);
+                        long startTime = System.currentTimeMillis();
+                        String msg = this.heartbeatRece(timeLimit);
+                        long stopTime = System.currentTimeMillis();
 
 //                    心跳超时且超过次数限制
-                    if (!HTCPLink.HEARTBEAT.equals(msg) && timeOutNum.addAndGet(1) > numLimit) {
-                        Log.i(HTCPLink.LOG_TAG, "startHeartbeat: " + numLimit + "consecutive timeouts, relaunch now");
-                        boolean result = this.reLaunch(timeLimit);
-                        if (!result) {
-                            Log.e(HTCPLink.LOG_TAG, "startHeartbeat: relaunch fail");
+                        if (!HTCPLink.HEARTBEAT.equals(msg) && timeOutNum.addAndGet(1) > numLimit) {
+                            Log.i(HTCPLink.LOG_TAG, "startHeartbeat: " + numLimit + "consecutive timeouts, relaunch now");
+                            boolean result = this.reLaunch(timeLimit);
+                            if (!result) {
+                                Log.e(HTCPLink.LOG_TAG, "startHeartbeat: relaunch fail");
+                                return;
+                            }
+                            this.startHeartbeat(timeLimit, numLimit, interTime);
                             return;
                         }
-                        this.startHeartbeat(timeLimit, numLimit, interTime);
-                        return;
-                    }
 //                    心跳正常
-                    timeOutNum.set(0);
-                    synchronized (this.RTTLock) {
-                        if (this.RTT == Link.INTNULL)
-                            this.RTT = stopTime - startTime;
-                        else this.RTT = this.RTT * 0.5 + (stopTime - startTime) * 0.5;
+                        timeOutNum.set(0);
+                        synchronized (this.RTTLock) {
+                            if (this.RTT == Link.INTNULL)
+                                this.RTT = stopTime - startTime;
+                            else this.RTT = this.RTT * 0.5 + (stopTime - startTime) * 0.5;
+                        }
+                        Log.i(HTCPLink.LOG_TAG, "Heartbeat: RTT = " + this.RTT);
+                    } catch (Exception e) {
+                        Log.e(LOG_TAG, "heartbeatService:Exception", e);
                     }
-                    Log.i(HTCPLink.LOG_TAG, "Heartbeat: RTT = " + this.RTT);
                 }, 0, interTime, TimeUnit.MILLISECONDS);
     }
 

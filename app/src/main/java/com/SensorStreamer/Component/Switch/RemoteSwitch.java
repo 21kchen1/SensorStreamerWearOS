@@ -3,10 +3,8 @@ package com.SensorStreamer.Component.Switch;
 import android.util.Log;
 
 import com.SensorStreamer.Component.Link.Link;
-import com.SensorStreamer.Model.RemotePDU;
+import com.SensorStreamer.Model.Switch.RemotePDU;
 import com.SensorStreamer.Utils.TypeTranDeter;
-
-import java.nio.charset.Charset;
 
 /**
  * 远程开关，并基于回调函数处理
@@ -86,7 +84,7 @@ public class RemoteSwitch extends Switch {
                 while (!Thread.currentThread().isInterrupted()) {
                     if (!this.link.canRece())
                         break;
-                    String msg = this.link.rece(bufSize, Link.INTNULL);
+                    String msg = this.link.structRece(bufSize, Link.INTNULL, LOG_TAG);
 //                    信息格式确认
                     if (!TypeTranDeter.canStr2JsonData(msg, RemotePDU.class))
                         continue;

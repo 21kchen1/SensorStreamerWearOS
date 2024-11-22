@@ -71,7 +71,7 @@ public class AudioListen extends Listen {
 //        0 0
         if (!this.canLaunch()) return false;
 
-        if (params.length != 1 || !TypeTranDeter.canStr2Num(params[0]) || Integer.parseInt(params[0]) <= 0)
+        if (params.length <= 1 || !TypeTranDeter.canStr2Num(params[0]) || Integer.parseInt(params[0]) <= 0)
             return false;
 
         int samplingRate = Integer.parseInt(params[0]);

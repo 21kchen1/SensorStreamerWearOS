@@ -35,9 +35,9 @@ import com.SensorStreamer.Component.Switch.SwitchF;
 import com.SensorStreamer.Component.Time.ReferenceTimeF;
 import com.SensorStreamer.Component.Time.Time;
 import com.SensorStreamer.Component.Time.TimeF;
-import com.SensorStreamer.Model.AudioData;
-import com.SensorStreamer.Model.SensorData;
-import com.SensorStreamer.Model.RemotePDU;
+import com.SensorStreamer.Model.Audio.AudioData;
+import com.SensorStreamer.Model.Sensor.SensorData;
+import com.SensorStreamer.Model.Switch.RemotePDU;
 import com.SensorStreamer.databinding.ActivityMainBinding;
 import com.google.gson.Gson;
 
@@ -155,7 +155,6 @@ public class MainActivity extends WearableActivity {
     @Override
     public void onBackPressed() {
         super.onBackPressed();
-        MainActivity.this.offSensor();
         MainActivity.this.disconnectClick();
         MainActivity.this.wakeLockRelease();
     }
@@ -166,7 +165,6 @@ public class MainActivity extends WearableActivity {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        MainActivity.this.offSensor();
         MainActivity.this.disconnectClick();
         MainActivity.this.wakeLockRelease();
     }
@@ -180,7 +178,11 @@ public class MainActivity extends WearableActivity {
             AudioData audioData = new AudioData(referenceTime.getTime(), data);
             String json = gson.toJson(audioData);
 //            发送数据
-            udpLink.send(json);
+            try {
+                udpLink.send(json);
+            } catch (Exception e) {
+                Log.e(LOG_TAG, "dealAudioData:Exception", e);
+            }
         }
     };
 
@@ -193,7 +195,11 @@ public class MainActivity extends WearableActivity {
             SensorData sensorData = new SensorData(referenceTime.getTime(), sensorTimestamp, type, data);
             String json = gson.toJson(sensorData);
 //            发送数据
-            udpLink.send(json);
+            try {
+                udpLink.send(json);
+            } catch (Exception e) {
+                Log.e(LOG_TAG, "dealSensorData:Exception", e);
+            }
         }
     };
 
@@ -201,15 +207,14 @@ public class MainActivity extends WearableActivity {
      * 启动传感器
      * */
     public void launchSensor() {
-        int[] sensors = new int[] {
+        int[] defaultSensors = new int[] {
                 Sensor.TYPE_ACCELEROMETER,
                 Sensor.TYPE_GYROSCOPE,
                 Sensor.TYPE_ROTATION_VECTOR,
                 Sensor.TYPE_MAGNETIC_FIELD,
-//                69682
         };
 //            启动相关组件
-        sensorListen.launch(sensors,0 ,this.sensorCallback);
+        sensorListen.launch(defaultSensors,0 ,this.sensorCallback);
         audioListen.launch(audioSamplingRate, this.audioCallback);
 //            开始读取数据
         sensorListen.startRead();
@@ -254,25 +259,23 @@ public class MainActivity extends WearableActivity {
      * 点击 connect 后执行
      * */
     private void connectClick() {
+//        启动通知
         new Thread(() -> {
             try {
 //                获取目标 IP
                 InetAddress aimIP = InetAddress.getByName(ipText.getText().toString());
-                if (!htcpLink.launch(aimIP, tcpPort, 100, StandardCharsets.UTF_8) ||
-                        !udpLink.launch(aimIP, udpPort, 0, StandardCharsets.UTF_8) ||
-                        !tcpRemoteSwitch.launch(htcpLink, MainActivity.this.remoteCallback)) {
-                    updateInfoText(R.string.text_info_fail);
-                    disconnectClick();
-                    return;
-                }
+                htcpLink.launch(aimIP, tcpPort, 100, StandardCharsets.UTF_8);
+                udpLink.launch(aimIP, udpPort, 0, StandardCharsets.UTF_8);
+                tcpRemoteSwitch.launch(htcpLink, MainActivity.this.remoteCallback);
 //                启动心跳
                 htcpLink.startHeartbeat(2000, 3,20000);
 //                启动远程开关
                 tcpRemoteSwitch.startListen(1024);
-//                启动通知
-                startForegroundService(MainActivity.this.sensorServiceIntent);
-            } catch (UnknownHostException e) {
-                Log.e(LOG_TAG, "connectClick:UnknownHostException", e);
+                startForegroundService(MainActivity.this.sensorServiceIntent.setAction(SensorService.ACTION_START_FORE));
+            } catch (Exception e) {
+                Log.e(LOG_TAG, "connectClick:Exception", e);
+                updateInfoText(R.string.text_info_fail);
+                disconnectClick();
             }
         }).start();
     }
@@ -287,7 +290,7 @@ public class MainActivity extends WearableActivity {
 //        关闭连接，允许更新地址
         if(!udpLink.off() || !htcpLink.off())
             Log.e("MainActivity", "disconnectClick:Link off error");
-        stopService(MainActivity.this.sensorServiceIntent);
+        startService(MainActivity.this.sensorServiceIntent.setAction(SensorService.ACTION_STOP_FORE));
     }
 
     /**

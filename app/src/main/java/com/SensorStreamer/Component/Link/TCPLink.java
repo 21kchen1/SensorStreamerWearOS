@@ -34,7 +34,7 @@ public class TCPLink extends Link {
      * 注册所有可变成员变量，设置目的地址
      * */
     @Override
-    public synchronized boolean launch(InetAddress address, int port, int timeout, Charset charset) {
+    public synchronized boolean launch(InetAddress address, int port, int timeout, Charset charset) throws Exception {
 //        0
         if (!this.canLaunch())
             return false;
@@ -52,7 +52,7 @@ public class TCPLink extends Link {
             Log.d(TCPLink.LOG_TAG, "launch:Exception", e);
             this.launchFlag = true;
             this.off();
-            return false;
+            throw e;
         }
 
 //        1
@@ -90,7 +90,7 @@ public class TCPLink extends Link {
      * 发送 buf 数据
      * */
     @Override
-    public synchronized void send(String msg) {
+    public synchronized void send(String msg) throws Exception {
 //        1
         if (!this.canSend())
             return;
@@ -100,6 +100,7 @@ public class TCPLink extends Link {
         } catch (Exception e) {
             Log.e(TCPLink.LOG_TAG, "send:Exception", e);
             this.off();
+            throw e;
         }
     }
 
@@ -107,7 +108,7 @@ public class TCPLink extends Link {
      * 接收并将数据存储在 buf
      * */
     @Override
-    public synchronized String rece(int bufSize, int timeLimit) {
+    public synchronized String rece(int bufSize, int timeLimit) throws Exception {
 //        1
         if (!this.canRece())
             return null;
@@ -117,7 +118,7 @@ public class TCPLink extends Link {
         } catch (Exception e) {
             Log.e(TCPLink.LOG_TAG, "rece:Exception", e);
             this.off();
-            return null;
+            throw e;
         }
     }
 
