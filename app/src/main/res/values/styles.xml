@@ -2,7 +2,6 @@
 <resources>
     <style name="SplashTheme" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="android:windowBackground">@color/white</item>
-        <item name="android:windowSwipeToDismiss">false</item>
     </style>
 
 </resources>

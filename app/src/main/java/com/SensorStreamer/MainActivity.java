@@ -161,6 +161,17 @@ public class MainActivity extends WearableActivity {
     }
 
     /**
+     * 软件销毁
+     * */
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        MainActivity.this.offSensor();
+        MainActivity.this.disconnectClick();
+        MainActivity.this.wakeLockRelease();
+    }
+
+    /**
      * 音频回调函数
      * */
     private final AudioListen.AudioCallback audioCallback = new AudioListen.AudioCallback () {
@@ -190,13 +201,12 @@ public class MainActivity extends WearableActivity {
      * 启动传感器
      * */
     public void launchSensor() {
-//                这里后面变成远程设置
         int[] sensors = new int[] {
-//                Sensor.TYPE_ACCELEROMETER,
-//                Sensor.TYPE_GYROSCOPE,
-//                Sensor.TYPE_ROTATION_VECTOR,
-//                Sensor.TYPE_MAGNETIC_FIELD,
-                69682
+                Sensor.TYPE_ACCELEROMETER,
+                Sensor.TYPE_GYROSCOPE,
+                Sensor.TYPE_ROTATION_VECTOR,
+                Sensor.TYPE_MAGNETIC_FIELD,
+//                69682
         };
 //            启动相关组件
         sensorListen.launch(sensors,0 ,this.sensorCallback);
