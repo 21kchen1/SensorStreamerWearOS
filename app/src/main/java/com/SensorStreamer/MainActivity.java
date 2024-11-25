@@ -133,8 +133,8 @@ public class MainActivity extends WearableActivity {
         setAmbientEnabled();
 
 //        创建 Link 类
-        LinkF udpLinkF = new UDPLinkF();
-        udpLink = udpLinkF.create();
+        LinkF linkF = new UDPLinkF();
+        udpLink = linkF.create();
         rtcpLink = new RTCPLink();
 //        创建 rtcp 心跳服务，并设置回调函数
         rtcpHeartBeat = new HeartBeat(rtcpLink, heartBeatCallback);
@@ -222,9 +222,9 @@ public class MainActivity extends WearableActivity {
         int audioDefaultSampling = 16000;
 
         for (String data : dataList) {
-            if (TypeTranDeter.canStr2JsonData(data, AudioControl.class))
+            if (TypeTranDeter.canStr2JsonData(data, AudioControl.class) && AudioControl.TYPE.equals(gson.fromJson(data, AudioControl.class).type))
                 audioControl = gson.fromJson(data, AudioControl.class);
-            if (TypeTranDeter.canStr2JsonData(data, SensorControl.class))
+            if (TypeTranDeter.canStr2JsonData(data, SensorControl.class) && SensorControl.TYPE.equals(gson.fromJson(data, SensorControl.class).type))
                 sensorControl = gson.fromJson(data, SensorControl.class);
         }
 

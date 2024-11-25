@@ -6,18 +6,16 @@ package com.SensorStreamer.Model.Control;
  * @version 1.0
  * */
 
-public class SensorControl {
-    public String type;
-    public int sampling;
+public class SensorControl extends TypeControl {
+    public static final String TYPE = "SensorControl";
     public int[] sensors;
 
     /**
      * @param sampling 采样率
      * @param sensors 传感器
      * */
-    public SensorControl(String type, int sampling, int[] sensors) {
-        this.type = type;
-        this.sampling = sampling;
+    public SensorControl(int sampling, int[] sensors) {
+        super(SensorControl.TYPE, sampling);
         this.sensors = sensors;
     }
 }

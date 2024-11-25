@@ -6,7 +6,7 @@ package com.SensorStreamer.Model.Data;
  * @version 1.0
  * */
 
-public class typeData {
+public class TypeData {
     public String type;
     public long unixTimestamp;
 
@@ -14,7 +14,7 @@ public class typeData {
      * @param type 数据类型
      * @param unixTimestamp 时间戳
      * */
-    public typeData(String type, long unixTimestamp) {
+    public TypeData(String type, long unixTimestamp) {
         this.type = type;
         this.unixTimestamp = unixTimestamp;
     }

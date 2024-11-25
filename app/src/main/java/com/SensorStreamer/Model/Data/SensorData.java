@@ -6,7 +6,7 @@ package com.SensorStreamer.Model.Data;
  * @version 1.0
  * */
 
-public class SensorData extends typeData {
+public class SensorData extends TypeData {
     public static final String TYPE = "SensorData";
     public long sensorTimestamp;
     public String sensorType;

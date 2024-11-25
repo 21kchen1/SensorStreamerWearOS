@@ -6,13 +6,13 @@ package com.SensorStreamer.Model.Control;
  * @version 1.0
  * */
 
-public class AudioControl {
-    public int sampling;
+public class AudioControl extends TypeControl {
+    public static final String TYPE = "AudioControl";
 
     /**
      * @param sampling 采样率
      * */
     public AudioControl(int sampling) {
-        this.sampling = sampling;
+        super(AudioControl.TYPE, sampling);
     }
 }

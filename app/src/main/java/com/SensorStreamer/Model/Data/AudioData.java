@@ -6,7 +6,7 @@ package com.SensorStreamer.Model.Data;
  * @version 1.0
  * */
 
-public class AudioData extends typeData {
+public class AudioData extends TypeData {
     public static final String TYPE = "AudioData";
     public byte[] audioData;
 
