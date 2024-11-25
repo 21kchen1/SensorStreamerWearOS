@@ -35,14 +35,16 @@ import com.SensorStreamer.Component.Switch.SwitchF;
 import com.SensorStreamer.Component.Time.ReferenceTimeF;
 import com.SensorStreamer.Component.Time.Time;
 import com.SensorStreamer.Component.Time.TimeF;
+import com.SensorStreamer.Model.Audio.AudioControl;
 import com.SensorStreamer.Model.Audio.AudioData;
+import com.SensorStreamer.Model.Sensor.SensorControl;
 import com.SensorStreamer.Model.Sensor.SensorData;
 import com.SensorStreamer.Model.Switch.RemotePDU;
+import com.SensorStreamer.Utils.TypeTranDeter;
 import com.SensorStreamer.databinding.ActivityMainBinding;
 import com.google.gson.Gson;
 
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 
 import java.util.Timer;
@@ -59,8 +61,6 @@ public class MainActivity extends WearableActivity {
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     private final Gson gson = new Gson();
-//    音频录取频率
-    int audioSamplingRate = 16000;
 //    服务器连接用
     private Link udpLink;
     private HTCPLink htcpLink;
@@ -206,16 +206,36 @@ public class MainActivity extends WearableActivity {
     /**
      * 启动传感器
      * */
-    public void launchSensor() {
+    public void launchSensor(String[] dataList) {
+        AudioControl audioControl = null;
+        SensorControl sensorControl = null;
+
         int[] defaultSensors = new int[] {
                 Sensor.TYPE_ACCELEROMETER,
                 Sensor.TYPE_GYROSCOPE,
                 Sensor.TYPE_ROTATION_VECTOR,
                 Sensor.TYPE_MAGNETIC_FIELD,
         };
+        int audioDefaultSampling = 16000;
+
+        for (String data : dataList) {
+            if (TypeTranDeter.canStr2JsonData(data, AudioControl.class))
+                audioControl = gson.fromJson(data, AudioControl.class);
+            if (TypeTranDeter.canStr2JsonData(data, SensorControl.class))
+                sensorControl = gson.fromJson(data, SensorControl.class);
+        }
+
 //            启动相关组件
-        sensorListen.launch(defaultSensors,0 ,this.sensorCallback);
-        audioListen.launch(audioSamplingRate, this.audioCallback);
+        if (sensorControl == null)
+            sensorListen.launch(defaultSensors,0 ,this.sensorCallback);
+        else
+            sensorListen.launch(sensorControl.sensors, sensorControl.sampling,this.sensorCallback);
+
+        if (audioControl == null)
+            audioListen.launch(audioDefaultSampling, this.audioCallback);
+        else
+            audioListen.launch(audioControl.sampling, this.audioCallback);
+
 //            开始读取数据
         sensorListen.startRead();
         audioListen.startRead();
@@ -239,7 +259,7 @@ public class MainActivity extends WearableActivity {
         @Override
         public void switchOn(RemotePDU remotePDU) {
             MainActivity.this.referenceTime.setBase(remotePDU.time, System.currentTimeMillis(), (long) htcpLink.getRTT());
-            MainActivity.this.launchSensor();
+            MainActivity.this.launchSensor(remotePDU.data);
         }
 
         @Override
