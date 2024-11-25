@@ -1,4 +1,4 @@
-package com.SensorStreamer.Model.Audio;
+package com.SensorStreamer.Model.Control;
 
 /**
  * 音频控制数据结构
@@ -12,7 +12,7 @@ public class AudioControl {
     /**
      * @param sampling 采样率
      * */
-    public AudioControl(int sampling, int[] sensors) {
+    public AudioControl(int sampling) {
         this.sampling = sampling;
     }
 }

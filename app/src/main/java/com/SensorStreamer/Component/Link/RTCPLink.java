@@ -106,7 +106,7 @@ public class RTCPLink extends TCPLink {
         try {
 //            清空队列信息
             this.defaultQueue.clear();
-//            清空队列映射对列
+//            清空队列映射队列
             for (LinkedBlockingQueue<RTCP_PDU> queue : queueMap.values()) {
                 queue.clear();
             }
@@ -122,7 +122,6 @@ public class RTCPLink extends TCPLink {
             this.socketThread = null;
 
             this.receNum = Link.INTNULL;
-
         } catch (Exception e) {
             Log.d(RTCPLink.LOG_TAG, "off:Exception", e);
             return false;
@@ -132,6 +131,36 @@ public class RTCPLink extends TCPLink {
         this.launchFlag = false;
 
         return true;
+    }
+
+    /**
+     * 重新启动连接
+     * @param timeLimit 重启时间限制
+     */
+    public synchronized boolean reLaunch(int timeLimit) {
+//        非启动状态不考虑重启
+        if (!this.canRece())
+            return false;
+
+        try {
+//            部分关闭，不清空已有的队列映射及内容
+            if (this.socket != null && !this.socket.isClosed())
+                this.socket.close();
+            this.socket = null;
+
+            if (this.socketThread != null)
+                this.socketThread.interrupt();
+            this.socketThread = null;
+
+            this.receNum = Link.INTNULL;
+
+//            0
+            this.launchFlag = false;
+            return this.launch(this.address, this.port, timeLimit, this.charset);
+        } catch (Exception e) {
+            Log.e(RTCPLink.LOG_TAG, "reLaunch:Exception", e);
+            return false;
+        }
     }
 
     /**
@@ -276,6 +305,9 @@ public class RTCPLink extends TCPLink {
                 structMsg = queue.take();
             else structMsg = queue.poll(timeLimit, TimeUnit.MILLISECONDS);
 
+//            如果超时返回 null
+            if (structMsg == null)
+                return null;
             return structMsg.data;
         } catch (Exception e) {
             Log.e(RTCPLink.LOG_TAG, "structRece:Exception", e);
@@ -285,6 +317,28 @@ public class RTCPLink extends TCPLink {
                 if (this.receNum > Link.INTNULL)
                     this.receNum--;
             }
+        }
+    }
+
+    /**
+     * 结构化发送信息
+     */
+    @Override
+    public void structSend(String msg, String... reuseName) throws Exception {
+//        1
+        if (!this.canSend())
+            return;
+
+//        名称判断
+        if (reuseName.length < 1 || !this.queueMap.containsKey(reuseName[0]))
+            return;
+
+        try {
+            RTCP_PDU structMsg = new RTCP_PDU(reuseName[0], msg);
+            this.send(Link.gson.toJson(structMsg));
+        } catch (Exception e) {
+            Log.e(RTCPLink.LOG_TAG, "structSend:Exception", e);
+            throw e;
         }
     }
 

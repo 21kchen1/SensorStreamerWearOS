@@ -32,7 +32,7 @@ public class HTCPLink extends TCPLink {
     protected int receNum;
     //    socket 收信线程
     protected Thread socketThread;
-    //    往返时间，毫米单位
+    //    往返时间，毫秒单位
     protected double RTT;
     //    同步锁
     protected final Object socketLock, receNumLock, RTTLock;

@@ -60,6 +60,15 @@ public abstract class Link {
     public abstract void send(String msg) throws Exception;
 
     /**
+     * 发信 Hooks
+     * @param msg 信息
+     * @param param 特殊参数
+     * */
+    public void structSend(String msg, String... param) throws Exception {
+        this.send(msg);
+    }
+
+    /**
      * 收信
      * @param bufSize 缓存大小
      * @param timeLimit 接收时间限制，毫秒为单位

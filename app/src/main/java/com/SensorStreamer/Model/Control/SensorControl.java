@@ -1,4 +1,4 @@
-package com.SensorStreamer.Model.Sensor;
+package com.SensorStreamer.Model.Control;
 
 /**
  * 传感器控制数据结构
@@ -7,6 +7,7 @@ package com.SensorStreamer.Model.Sensor;
  * */
 
 public class SensorControl {
+    public String type;
     public int sampling;
     public int[] sensors;
 
@@ -14,7 +15,8 @@ public class SensorControl {
      * @param sampling 采样率
      * @param sensors 传感器
      * */
-    public SensorControl(int sampling, int[] sensors) {
+    public SensorControl(String type, int sampling, int[] sensors) {
+        this.type = type;
         this.sampling = sampling;
         this.sensors = sensors;
     }

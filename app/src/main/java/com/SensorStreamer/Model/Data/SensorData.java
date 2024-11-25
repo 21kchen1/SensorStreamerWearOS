@@ -1,4 +1,4 @@
-package com.SensorStreamer.Model.Sensor;
+package com.SensorStreamer.Model.Data;
 
 /**
  * Sensor 数据结构
@@ -6,8 +6,8 @@ package com.SensorStreamer.Model.Sensor;
  * @version 1.0
  * */
 
-public class SensorData {
-    public long unixTimestamp;
+public class SensorData extends typeData {
+    public static final String TYPE = "SensorData";
     public long sensorTimestamp;
     public String sensorType;
     public float[] values;
@@ -19,7 +19,7 @@ public class SensorData {
      * @param values 传感器数据
      * */
     public SensorData(long unixTimestamp, long sensorTimestamp, String sensorType, float[] values) {
-        this.unixTimestamp = unixTimestamp;
+        super(SensorData.TYPE, unixTimestamp);
         this.sensorTimestamp = sensorTimestamp;
         this.sensorType = sensorType;
         this.values = values;

@@ -88,6 +88,9 @@ public class SensorListen extends Listen {
     public synchronized boolean launch(int[] sensors, int samplingRate, SensorCallback callback) {
 //        0 0
         if (!this.canLaunch()) return false;
+
+        if (sensors == null)
+            return false;
         
         String[] params = new String[sensors.length + 1];
 //        将类型转换为字符串参数
@@ -107,7 +110,7 @@ public class SensorListen extends Listen {
 //        0 0
         if (!this.canLaunch()) return false;
 
-        if (params.length < 2 || !TypeTranDeter.canStr2Num(params[params.length - 1]) || Integer.parseInt(params[params.length - 1]) < 0)
+        if (params == null || params.length < 2 || !TypeTranDeter.canStr2Num(params[params.length - 1]) || Integer.parseInt(params[params.length - 1]) < 0)
             return false;
 
         this.samplingRate = Integer.parseInt(params[params.length - 1]);

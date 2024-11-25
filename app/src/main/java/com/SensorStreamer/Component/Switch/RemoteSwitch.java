@@ -21,7 +21,7 @@ public class RemoteSwitch extends Switch {
         void switchOff(RemotePDU remotePDU);
     }
 
-    private final static String LOG_TAG = "RemoteSwitch";
+    public final static String LOG_TAG = "RemoteSwitch";
 //    回调函数
     private RemoteCallback callback;
 //    连接
