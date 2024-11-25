@@ -23,6 +23,7 @@ import com.SensorStreamer.Component.Link.Link;
 import com.SensorStreamer.Component.Link.LinkF;
 import com.SensorStreamer.Component.Link.RTCPLink;
 import com.SensorStreamer.Component.Link.RTCPLinkExpand.HeartBeat;
+import com.SensorStreamer.Component.Link.RTCPLinkF;
 import com.SensorStreamer.Component.Link.UDPLinkF;
 import com.SensorStreamer.Component.Listen.AudioListen;
 import com.SensorStreamer.Component.Listen.AudioListenF;
@@ -135,7 +136,8 @@ public class MainActivity extends WearableActivity {
 //        创建 Link 类
         LinkF linkF = new UDPLinkF();
         udpLink = linkF.create();
-        rtcpLink = new RTCPLink();
+        linkF = new RTCPLinkF();
+        rtcpLink = (RTCPLink) linkF.create();
 //        创建 rtcp 心跳服务，并设置回调函数
         rtcpHeartBeat = new HeartBeat(rtcpLink, heartBeatCallback);
 //        创建监听器
