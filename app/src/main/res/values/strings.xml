@@ -8,5 +8,6 @@
     <string name="text_info_default">Be Ready</string>
     <string name="text_info_connected">Connected</string>
     <string name="text_info_fail">Connect Fail</string>
+    <string name="text_info_Streaming">Streaming</string>
 
 </resources>

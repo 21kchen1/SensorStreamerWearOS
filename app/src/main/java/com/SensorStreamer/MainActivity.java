@@ -260,11 +260,13 @@ public class MainActivity extends WearableActivity {
         public void switchOn(RemotePDU remotePDU) {
             MainActivity.this.referenceTime.setBase(remotePDU.time, System.currentTimeMillis(), (long) htcpLink.getRTT());
             MainActivity.this.launchSensor(remotePDU.data);
+            updateInfoText(R.string.text_info_Streaming);
         }
 
         @Override
         public void switchOff(RemotePDU remotePDU) {
             MainActivity.this.offSensor();
+            updateInfoText(R.string.text_info_connected);
         }
     };
 
