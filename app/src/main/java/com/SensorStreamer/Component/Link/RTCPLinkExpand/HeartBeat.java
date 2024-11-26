@@ -78,14 +78,18 @@ public class HeartBeat {
 //                    心跳超时
                         if (!HeartBeat.HEART_BEAT.equals(msg)) {
 //                            没有超出次数
-                            if (timeOutNum.addAndGet(1) <= numLimit)
+                            if (timeOutNum.addAndGet(1) <= numLimit) {
+                                Log.e(HeartBeat.LOG_TAG, "startHeartbeat: Timeout");
                                 return;
+                            }
                             Log.i(HeartBeat.LOG_TAG, "startHeartbeat: " + numLimit + " consecutive timeouts, relaunch now");
                             boolean result = link.reLaunch(timeLimit);
-                            if (result)
+                            if (result) {
+                                timeOutNum.set(0);
                                 return;
+                            }
 //                            重启失败
-                            Log.e(HeartBeat.LOG_TAG, "startHeartbeat: relaunch fail");
+                            Log.e(HeartBeat.LOG_TAG, "startHeartbeat: Relaunch fail");
                             this.stopHeartbeat();
 //                                执行回调函数
                             new Thread(this.callback::onLinkLose).start();
