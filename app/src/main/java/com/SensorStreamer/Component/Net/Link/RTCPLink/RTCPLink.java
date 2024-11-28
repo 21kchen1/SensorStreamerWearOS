@@ -1,7 +1,10 @@
-package com.SensorStreamer.Component.Link;
+package com.SensorStreamer.Component.Net.Link.RTCPLink;
 
 import android.util.Log;
 
+import com.SensorStreamer.Component.Net.Link.Link;
+import com.SensorStreamer.Component.Net.RLink.RLink;
+import com.SensorStreamer.Component.Net.Link.TCPLink.TCPLink;
 import com.SensorStreamer.Utils.TypeTranDeter;
 
 import java.io.BufferedReader;
@@ -24,17 +27,13 @@ import java.util.concurrent.TimeUnit;
  */
 
 public class RTCPLink extends TCPLink {
-    public static class RTCP_PDU {
-        public String reuseName;
-        public String data;
-
+    public static class RTCP_PDU extends RLink.RLink_PDU {
         /**
          * @param reuseName 复用名称
          * @param data 数据
          * */
         public RTCP_PDU(String reuseName, String data) {
-            this.reuseName = reuseName;
-            this.data = data;
+            super(reuseName, data);
         }
     }
 
@@ -53,11 +52,11 @@ public class RTCPLink extends TCPLink {
     public RTCPLink() {
         super();
 
-        defaultQueue = new LinkedBlockingQueue<>();
-        queueMap = new HashMap<>();
+        this.defaultQueue = new LinkedBlockingQueue<>();
+        this.queueMap = new HashMap<>();
 
-        socketLock = new Object();
-        receNumLock = new Object();
+        this.socketLock = new Object();
+        this.receNumLock = new Object();
 
         this.receNum = Link.INTNULL;
     }
@@ -83,7 +82,7 @@ public class RTCPLink extends TCPLink {
 //            允许接收
             this.startSocketRece();
         } catch (Exception e) {
-            Log.d(RTCPLink.LOG_TAG, "launch:Exception", e);
+            Log.e(RTCPLink.LOG_TAG, "launch:Exception", e);
             this.launchFlag = true;
             this.off();
             throw e;
@@ -91,45 +90,6 @@ public class RTCPLink extends TCPLink {
 
 //        1
         this.launchFlag = true;
-        return true;
-    }
-
-    /**
-     * 注销所有可变成员变量
-     */
-    @Override
-    public synchronized boolean off() {
-//        1
-        if (!this.canOff())
-            return false;
-
-        try {
-//            清空队列信息
-            this.defaultQueue.clear();
-//            清空队列映射队列
-            for (LinkedBlockingQueue<RTCP_PDU> queue : queueMap.values()) {
-                queue.clear();
-            }
-//            清空队列映射
-            queueMap.clear();
-
-            if (this.socket != null && !this.socket.isClosed())
-                this.socket.close();
-            this.socket = null;
-
-            if (this.socketThread != null)
-                this.socketThread.interrupt();
-            this.socketThread = null;
-
-            this.receNum = Link.INTNULL;
-        } catch (Exception e) {
-            Log.d(RTCPLink.LOG_TAG, "off:Exception", e);
-            return false;
-        }
-
-//        0
-        this.launchFlag = false;
-
         return true;
     }
 
@@ -164,19 +124,57 @@ public class RTCPLink extends TCPLink {
     }
 
     /**
+     * 注销所有可变成员变量
+     */
+    @Override
+    public synchronized boolean off() {
+//        1
+        if (!this.canOff())
+            return false;
+
+        try {
+//            清空队列信息
+            this.defaultQueue.clear();
+//            清空队列映射队列
+            for (LinkedBlockingQueue<RTCP_PDU> queue : queueMap.values()) {
+                queue.clear();
+            }
+//            清空队列映射
+            queueMap.clear();
+
+            if (this.socketThread != null)
+                this.socketThread.interrupt();
+            this.socketThread = null;
+
+            if (this.socket != null && !this.socket.isClosed())
+                this.socket.close();
+            this.socket = null;
+
+            this.receNum = Link.INTNULL;
+        } catch (Exception e) {
+            Log.e(RTCPLink.LOG_TAG, "off:Exception", e);
+            return false;
+        }
+
+//        0
+        this.launchFlag = false;
+        return true;
+    }
+
+    /**
      * 添加复用及其对应队列
      * @param reuseName 复用名称
      * @return 是否添加成功
      * */
     public boolean addReuseName(String reuseName) {
-        if (!canRece())
+        if (!this.canRece())
             return false;
 
-        if (queueMap.containsKey(reuseName))
+        if (this.queueMap.containsKey(reuseName))
             return false;
 
         LinkedBlockingQueue<RTCP_PDU> queue = new LinkedBlockingQueue<>();
-        queueMap.put(reuseName, queue);
+        this.queueMap.put(reuseName, queue);
         return true;
     }
 
@@ -227,6 +225,7 @@ public class RTCPLink extends TCPLink {
                     break;
                 } catch (Exception e) {
                     Log.e(RTCPLink.LOG_TAG, "startSocketRece:Exception", e);
+                    this.off();
                     break;
                 }
             }
@@ -295,8 +294,8 @@ public class RTCPLink extends TCPLink {
             synchronized (this.receNumLock) {
                 this.receNum++;
             }
-            if (!this.defaultQueue.isEmpty())
-                return this.defaultQueue.take();
+            if (!queue.isEmpty())
+                return queue.take().data;
 
             synchronized (this.socketLock) {
                 this.socketLock.notify();

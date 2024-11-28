@@ -1,9 +1,7 @@
-package com.SensorStreamer.Component.Switch;
+package com.SensorStreamer.Component.Net.NetExpand.Switch;
 
-import com.SensorStreamer.Component.Link.Link;
+import com.SensorStreamer.Component.Net.Net;
 import com.google.gson.Gson;
-
-import java.nio.charset.Charset;
 
 /**
  * Switch 抽象类
@@ -15,7 +13,7 @@ public abstract class Switch {
     /**
      * 通用回调函数接口
      * */
-    public interface SwitchCallback {};
+    public interface SwitchCallback {}
 
     protected final Gson gson;
     protected boolean launchFlag, startFlag;
@@ -37,7 +35,7 @@ public abstract class Switch {
      * @param link 连接类
      * @return 是否注册成功
      * */
-    public abstract boolean launch(Link link, SwitchCallback callback);
+    public abstract boolean launch(Net link, SwitchCallback callback);
 
     /**
      * 注销组件

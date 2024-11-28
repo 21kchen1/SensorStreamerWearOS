@@ -1,6 +1,8 @@
-package com.SensorStreamer.Component.Link;
+package com.SensorStreamer.Component.Net.Link.TCPLink;
 
 import android.util.Log;
+
+import com.SensorStreamer.Component.Net.Link.Link;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -61,6 +63,23 @@ public class TCPLink extends Link {
     }
 
     /**
+     * 注销部分变量后重新注册
+     * */
+    @Override
+    public synchronized boolean reLaunch(int timeLimit) {
+        if (!this.canOff())
+            return false;
+
+        try {
+            this.off();
+            return this.launch(this.address, this.port, timeLimit, this.charset);
+        } catch (Exception e) {
+            Log.d(TCPLink.LOG_TAG, "reLaunch:Exception", e);
+            return false;
+        }
+    }
+
+    /**
      * 注销所有可变成员变量
      * */
     @Override
@@ -73,9 +92,6 @@ public class TCPLink extends Link {
             if (this.socket != null && !this.socket.isClosed())
                 this.socket.close();
             this.socket = null;
-
-            this.address = null;
-            this.port = Link.INTNULL;
         } catch (Exception e) {
             Log.d(TCPLink.LOG_TAG, "off:Exception", e);
             return false;
@@ -90,7 +106,7 @@ public class TCPLink extends Link {
      * 发送 buf 数据
      * */
     @Override
-    public synchronized void send(String msg) throws Exception {
+    public void send(String msg) throws Exception {
 //        1
         if (!this.canSend())
             return;
@@ -108,7 +124,7 @@ public class TCPLink extends Link {
      * 接收并将数据存储在 buf
      * */
     @Override
-    public synchronized String rece(int bufSize, int timeLimit) throws Exception {
+    public String rece(int bufSize, int timeLimit) throws Exception {
 //        1
         if (!this.canRece())
             return null;

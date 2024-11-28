@@ -1,9 +1,9 @@
-package com.SensorStreamer.Component.Link.RTCPLinkExpand;
+package com.SensorStreamer.Component.Net.Link.RTCPLink.RTCPLinkExpand;
 
 import android.util.Log;
 
-import com.SensorStreamer.Component.Link.Link;
-import com.SensorStreamer.Component.Link.RTCPLink;
+import com.SensorStreamer.Component.Net.Link.Link;
+import com.SensorStreamer.Component.Net.Link.RTCPLink.RTCPLink;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -14,9 +14,10 @@ import java.util.concurrent.atomic.AtomicInteger;
  * RTCP 心跳拓展类
  * @author chen
  * @version 1.0
+ * @deprecated 弃用，使用 RLinkExpand 中的 HeartBeat
  */
 
-public class HeartBeat {
+public class HeartBeatForRTCP {
     /**
      * HeartBeat 回调函数类接口
      * */
@@ -27,7 +28,7 @@ public class HeartBeat {
         void onLinkLose();
     }
 
-    public final static String LOG_TAG = "HeartBeat";
+    public final static String LOG_TAG = "HeartBeatForRTCP";
     private final static String HEART_BEAT = "heartbeat";
 //    同步锁
     private final Object RTTLock;
@@ -40,7 +41,7 @@ public class HeartBeat {
 //    心跳服务
     private ScheduledExecutorService heartbeatService;
 
-    public HeartBeat(RTCPLink link, HeartBeatCallback callback) {
+    public HeartBeatForRTCP(RTCPLink link, HeartBeatCallback callback) {
         this.RTTLock = new Object();
 
         this.link = link;
@@ -70,26 +71,26 @@ public class HeartBeat {
                 () -> {
                     try {
 //                   发送心跳信息
-                        link.structSend(HeartBeat.HEART_BEAT, HeartBeat.LOG_TAG);
+                        link.structSend(HeartBeatForRTCP.HEART_BEAT, HeartBeatForRTCP.LOG_TAG);
                         long startTime = System.currentTimeMillis();
-                        String msg = link.structRece(1024, timeLimit, HeartBeat.LOG_TAG);
+                        String msg = link.structRece(1024, timeLimit, HeartBeatForRTCP.LOG_TAG);
                         long stopTime = System.currentTimeMillis();
 
 //                    心跳超时
-                        if (!HeartBeat.HEART_BEAT.equals(msg)) {
+                        if (!HeartBeatForRTCP.HEART_BEAT.equals(msg)) {
 //                            没有超出次数
                             if (timeOutNum.addAndGet(1) <= numLimit) {
-                                Log.e(HeartBeat.LOG_TAG, "startHeartbeat: Timeout");
+                                Log.e(HeartBeatForRTCP.LOG_TAG, "startHeartbeat: Timeout");
                                 return;
                             }
-                            Log.i(HeartBeat.LOG_TAG, "startHeartbeat: " + numLimit + " consecutive timeouts, relaunch now");
+                            Log.i(HeartBeatForRTCP.LOG_TAG, "startHeartbeat: " + numLimit + " consecutive timeouts, relaunch now");
                             boolean result = link.reLaunch(timeLimit);
                             if (result) {
                                 timeOutNum.set(0);
                                 return;
                             }
 //                            重启失败
-                            Log.e(HeartBeat.LOG_TAG, "startHeartbeat: Relaunch fail");
+                            Log.e(HeartBeatForRTCP.LOG_TAG, "startHeartbeat: Relaunch fail");
                             this.stopHeartbeat();
 //                                执行回调函数
                             new Thread(this.callback::onLinkLose).start();
@@ -102,7 +103,7 @@ public class HeartBeat {
                                 this.RTT = stopTime - startTime;
                             else this.RTT = this.RTT * 0.5 + (stopTime - startTime) * 0.5;
                         }
-                        Log.i(HeartBeat.LOG_TAG, "Heartbeat: RTT = " + this.RTT);
+                        Log.i(HeartBeatForRTCP.LOG_TAG, "Heartbeat: RTT = " + this.RTT);
                     } catch (Exception e) {
                         Log.e(LOG_TAG, "heartbeatService:Exception", e);
                     }

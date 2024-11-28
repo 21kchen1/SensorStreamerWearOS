@@ -1,4 +1,7 @@
-package com.SensorStreamer.Component.Link;
+package com.SensorStreamer.Component.Net.Link.UDPLink;
+
+import com.SensorStreamer.Component.Net.Link.Link;
+import com.SensorStreamer.Component.Net.Link.LinkF;
 
 /**
  * UDPLink 工厂

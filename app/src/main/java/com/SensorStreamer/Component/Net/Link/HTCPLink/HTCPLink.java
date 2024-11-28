@@ -1,6 +1,9 @@
-package com.SensorStreamer.Component.Link;
+package com.SensorStreamer.Component.Net.Link.HTCPLink;
 
 import android.util.Log;
+
+import com.SensorStreamer.Component.Net.Link.Link;
+import com.SensorStreamer.Component.Net.Link.TCPLink.TCPLink;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;

@@ -19,20 +19,25 @@ import android.widget.TextView;
 
 import androidx.core.content.ContextCompat;
 
-import com.SensorStreamer.Component.Link.Link;
-import com.SensorStreamer.Component.Link.LinkF;
-import com.SensorStreamer.Component.Link.RTCPLink;
-import com.SensorStreamer.Component.Link.RTCPLinkExpand.HeartBeat;
-import com.SensorStreamer.Component.Link.RTCPLinkF;
-import com.SensorStreamer.Component.Link.UDPLinkF;
+import com.SensorStreamer.Component.Net.Link.Link;
+import com.SensorStreamer.Component.Net.Link.LinkF;
+import com.SensorStreamer.Component.Net.Link.TCPLink.TCPLink;
+import com.SensorStreamer.Component.Net.RLink.NRLink;
+import com.SensorStreamer.Component.Net.RLink.RLink;
+import com.SensorStreamer.Component.Net.Link.RTCPLink.RTCPLink;
+import com.SensorStreamer.Component.Net.Link.RTCPLink.RTCPLinkExpand.HeartBeatForRTCP;
+import com.SensorStreamer.Component.Net.Link.RTCPLink.RTCPLinkF;
+import com.SensorStreamer.Component.Net.Link.TCPLink.TCPLinkF;
+import com.SensorStreamer.Component.Net.Link.UDPLink.UDPLinkF;
 import com.SensorStreamer.Component.Listen.AudioListen;
 import com.SensorStreamer.Component.Listen.AudioListenF;
 import com.SensorStreamer.Component.Listen.SensorListen;
 import com.SensorStreamer.Component.Listen.SensorListenF;
-import com.SensorStreamer.Component.Switch.RemoteSwitch;
-import com.SensorStreamer.Component.Switch.RemoteSwitchF;
-import com.SensorStreamer.Component.Switch.Switch;
-import com.SensorStreamer.Component.Switch.SwitchF;
+import com.SensorStreamer.Component.Net.NetExpand.Switch.RemoteSwitch;
+import com.SensorStreamer.Component.Net.NetExpand.Switch.RemoteSwitchF;
+import com.SensorStreamer.Component.Net.NetExpand.Switch.Switch;
+import com.SensorStreamer.Component.Net.NetExpand.Switch.SwitchF;
+import com.SensorStreamer.Component.Net.RLink.RLinkExpand.HeartBeat.HeartBeat;
 import com.SensorStreamer.Component.Time.ReferenceTimeF;
 import com.SensorStreamer.Component.Time.Time;
 import com.SensorStreamer.Component.Time.TimeF;
@@ -64,9 +69,13 @@ public class MainActivity extends WearableActivity {
     private final Gson gson = new Gson();
 //    服务器连接用
     private Link udpLink;
+    private Link tcpLink;
+    private NRLink rLink;
+    private HeartBeat rLinkHeartBeat;
+
     private RTCPLink rtcpLink;
 //    rtcp 拓展功能
-    private HeartBeat rtcpHeartBeat;
+//    private HeartBeatForRTCP rtcpHeartBeatForRTCP;
 //    监视器
     private AudioListen audioListen;
     private SensorListen sensorListen;
@@ -136,11 +145,14 @@ public class MainActivity extends WearableActivity {
 //        创建 Link 类
         LinkF linkF = new UDPLinkF();
         udpLink = linkF.create();
+        linkF = new TCPLinkF();
+        tcpLink = linkF.create();
+        rLink = new NRLink();
+        rLinkHeartBeat = new HeartBeat(rLink, heartBeatCallback);
+
         linkF = new RTCPLinkF();
         rtcpLink = (RTCPLink) linkF.create();
-//        创建 rtcp 心跳服务，并设置回调函数
-        rtcpHeartBeat = new HeartBeat(rtcpLink, heartBeatCallback);
-//        创建监听器
+
         AudioListenF audioListenF = new AudioListenF();
         audioListen = (AudioListen) audioListenF.create(this);
         SensorListenF sensorListenF = new SensorListenF();
@@ -263,7 +275,7 @@ public class MainActivity extends WearableActivity {
     private final RemoteSwitch.RemoteCallback remoteCallback = new RemoteSwitch.RemoteCallback() {
         @Override
         public void switchOn(RemotePDU remotePDU) {
-            MainActivity.this.referenceTime.setBase(remotePDU.time, System.currentTimeMillis(), (long) rtcpHeartBeat.getRTT());
+            MainActivity.this.referenceTime.setBase(remotePDU.time, System.currentTimeMillis(), (long) rLinkHeartBeat.getRTT());
             MainActivity.this.launchSensor(remotePDU.data);
             updateInfoText(R.string.text_info_streaming);
         }
@@ -292,15 +304,19 @@ public class MainActivity extends WearableActivity {
 //                获取目标 IP
                 InetAddress aimIP = InetAddress.getByName(ipText.getText().toString());
                 udpLink.launch(aimIP, udpPort, 0, StandardCharsets.UTF_8);
-                rtcpLink.launch(aimIP, tcpPort, 100, StandardCharsets.UTF_8);
-//                添加服务
-                rtcpLink.addReuseName(RemoteSwitch.LOG_TAG);
-                tcpRemoteSwitch.launch(rtcpLink, MainActivity.this.remoteCallback);
-//                添加服务
-                rtcpLink.addReuseName(HeartBeat.LOG_TAG);
-                rtcpHeartBeat.startHeartbeat(2000, 3, 2000);
-//                启动远程开关
+//                rtcpLink.launch(aimIP, tcpPort, 100, StandardCharsets.UTF_8);
+
+                tcpLink.launch(aimIP, tcpPort, 100, StandardCharsets.UTF_8);
+//                启动 rLink
+                rLink.launch(tcpLink);
+//                添加远程开关服务
+                rLink.addReuseName(RemoteSwitch.LOG_TAG);
+                tcpRemoteSwitch.launch(rLink, MainActivity.this.remoteCallback);
                 tcpRemoteSwitch.startListen(1024);
+//                添加心跳
+                rLink.addReuseName(HeartBeat.LOG_TAG);
+                rLinkHeartBeat.startHeartbeat(2000, 3, 2000);;
+//                启动远程开关
                 startForegroundService(MainActivity.this.sensorServiceIntent.setAction(SensorService.ACTION_START_FORE));
             } catch (Exception e) {
                 Log.e(LOG_TAG, "connectClick:Exception", e);
@@ -318,7 +334,16 @@ public class MainActivity extends WearableActivity {
         tcpRemoteSwitch.stopListen();
         tcpRemoteSwitch.off();
 
-        rtcpHeartBeat.stopHeartbeat();
+        rLinkHeartBeat.stopHeartbeat();
+        Log.e("NRLink", "dadadadad");
+        rLink.off();
+        long startTime = System.currentTimeMillis();
+        tcpLink.off();
+        Log.e("NRLink", "dadadadad");
+        long stopTime = System.currentTimeMillis();
+        System.out.println(stopTime - startTime);
+
+//        rtcpHeartBeatForRTCP.stopHeartbeat();
 //        关闭连接，允许更新地址
         if(!udpLink.off() || !rtcpLink.off())
             Log.e("MainActivity", "disconnectClick:Link off error");

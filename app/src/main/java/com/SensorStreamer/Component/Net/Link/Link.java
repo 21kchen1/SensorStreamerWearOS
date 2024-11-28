@@ -1,5 +1,6 @@
-package com.SensorStreamer.Component.Link;
+package com.SensorStreamer.Component.Net.Link;
 
+import com.SensorStreamer.Component.Net.Net;
 import com.google.gson.Gson;
 
 import java.net.InetAddress;
@@ -11,7 +12,7 @@ import java.nio.charset.Charset;
  * @version 1.2
  * */
 
-public abstract class Link {
+public abstract class Link implements Net {
     public final static int INTNULL = 0;
 
     protected final static Gson gson = new Gson();
@@ -48,6 +49,13 @@ public abstract class Link {
     public abstract boolean launch(InetAddress address, int port, int timeout, Charset charset) throws Exception;
 
     /**
+     * 重新启动
+     * @return 重启成功
+     * @param timeLimit 重启时间限制
+     * */
+    public abstract boolean reLaunch(int timeLimit);
+
+    /**
      * 注销组件
      * @return 是否注销成功
      * */
@@ -64,6 +72,7 @@ public abstract class Link {
      * @param msg 信息
      * @param param 特殊参数
      * */
+    @Override
     public void structSend(String msg, String... param) throws Exception {
         this.send(msg);
     }
@@ -83,6 +92,7 @@ public abstract class Link {
      * @param param 特殊参数
      * @return 数据
      * */
+    @Override
     public String structRece(int bufSize, int timeLimit, String... param) throws Exception {
         return this.rece(bufSize, timeLimit);
     }
@@ -96,6 +106,7 @@ public abstract class Link {
     /**
      * 能否注册
      * */
+    @Override
     public boolean canLaunch() {
         return !this.launchFlag;
     }
@@ -103,6 +114,7 @@ public abstract class Link {
     /**
      * 能否注销
      * */
+    @Override
     public boolean canOff() {
         return this.launchFlag;
     }
@@ -110,6 +122,7 @@ public abstract class Link {
     /**
      * 能否发送
      * */
+    @Override
     public boolean canSend() {
         return this.canOff();
     }
@@ -117,6 +130,7 @@ public abstract class Link {
     /**
      * 能否接收
      * */
+    @Override
     public boolean canRece() {
         return this.canOff();
     }

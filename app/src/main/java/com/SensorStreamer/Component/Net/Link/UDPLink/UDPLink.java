@@ -1,6 +1,8 @@
-package com.SensorStreamer.Component.Link;
+package com.SensorStreamer.Component.Net.Link.UDPLink;
 
 import android.util.Log;
+
+import com.SensorStreamer.Component.Net.Link.Link;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -52,6 +54,14 @@ public class UDPLink extends Link {
     }
 
     /**
+     * UDP 不需要重启，非面向连接的协议
+     * */
+    @Override
+    public boolean reLaunch(int timeLimit) {
+        return true;
+    }
+
+    /**
      * 注销所有可变成员变量
      * */
     @Override
@@ -68,10 +78,6 @@ public class UDPLink extends Link {
             if (this.receSocket != null && !this.receSocket.isClosed())
                 this.receSocket.close();
             this.receSocket = null;
-
-            this.address = null;
-            this.port = Link.INTNULL;
-            this.charset = null;
         } catch (Exception e) {
             Log.d(UDPLink.LOG_TAG, "off:Exception", e);
             return false;

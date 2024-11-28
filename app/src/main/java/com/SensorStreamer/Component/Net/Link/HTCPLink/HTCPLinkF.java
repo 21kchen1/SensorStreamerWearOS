@@ -1,4 +1,7 @@
-package com.SensorStreamer.Component.Link;
+package com.SensorStreamer.Component.Net.Link.HTCPLink;
+
+import com.SensorStreamer.Component.Net.Link.Link;
+import com.SensorStreamer.Component.Net.Link.LinkF;
 
 /**
  * HTCPLink 工厂

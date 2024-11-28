@@ -1,4 +1,4 @@
-package com.SensorStreamer.Component.Link;
+package com.SensorStreamer.Component.Net.Link;
 
 /**
  * Link 抽象工厂

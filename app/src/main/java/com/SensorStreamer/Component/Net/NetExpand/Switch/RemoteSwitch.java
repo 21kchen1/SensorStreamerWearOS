@@ -1,8 +1,9 @@
-package com.SensorStreamer.Component.Switch;
+package com.SensorStreamer.Component.Net.NetExpand.Switch;
 
 import android.util.Log;
 
-import com.SensorStreamer.Component.Link.Link;
+import com.SensorStreamer.Component.Net.Link.Link;
+import com.SensorStreamer.Component.Net.Net;
 import com.SensorStreamer.Model.Switch.RemotePDU;
 import com.SensorStreamer.Utils.TypeTranDeter;
 
@@ -25,7 +26,7 @@ public class RemoteSwitch extends Switch {
 //    回调函数
     private RemoteCallback callback;
 //    连接
-    private Link link;
+    private Net link;
 //    监听线程
     private Thread listenThread;
 
@@ -40,7 +41,7 @@ public class RemoteSwitch extends Switch {
      * 注册，不负责组件的 launch
      * */
     @Override
-    public synchronized boolean launch(Link link, SwitchCallback callback) {
+    public synchronized boolean launch(Net link, SwitchCallback callback) {
 //        0 0
         if (!this.canLaunch()) return false;
 
@@ -128,6 +129,7 @@ public class RemoteSwitch extends Switch {
 
         if (this.listenThread != null)
             this.listenThread.interrupt();
+        this.listenThread = null;
 
 //        1 0
         this.startFlag = false;

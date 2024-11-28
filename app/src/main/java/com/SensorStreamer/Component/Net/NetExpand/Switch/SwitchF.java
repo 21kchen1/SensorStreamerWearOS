@@ -1,4 +1,4 @@
-package com.SensorStreamer.Component.Switch;
+package com.SensorStreamer.Component.Net.NetExpand.Switch;
 
 /**
  * Switch 抽象工厂
