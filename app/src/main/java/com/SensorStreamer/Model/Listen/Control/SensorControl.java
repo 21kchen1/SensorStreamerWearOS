@@ -1,4 +1,4 @@
-package com.SensorStreamer.Model.Control;
+package com.SensorStreamer.Model.Listen.Control;
 
 /**
  * 传感器控制数据结构

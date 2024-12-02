@@ -1,4 +1,4 @@
-package com.SensorStreamer.Model.Control;
+package com.SensorStreamer.Model.Listen.Control;
 
 /**
  * 音频控制数据结构

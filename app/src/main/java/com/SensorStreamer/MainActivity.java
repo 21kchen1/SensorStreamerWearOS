@@ -21,30 +21,27 @@ import androidx.core.content.ContextCompat;
 
 import com.SensorStreamer.Component.Net.Link.Link;
 import com.SensorStreamer.Component.Net.Link.LinkF;
-import com.SensorStreamer.Component.Net.Link.TCPLink.TCPLink;
-import com.SensorStreamer.Component.Net.RLink.NRLink;
-import com.SensorStreamer.Component.Net.RLink.RLink;
-import com.SensorStreamer.Component.Net.Link.RTCPLink.RTCPLink;
-import com.SensorStreamer.Component.Net.Link.RTCPLink.RTCPLinkExpand.HeartBeatForRTCP;
-import com.SensorStreamer.Component.Net.Link.RTCPLink.RTCPLinkF;
+import com.SensorStreamer.Component.Net.RLink.NRLink.NRLink;
 import com.SensorStreamer.Component.Net.Link.TCPLink.TCPLinkF;
 import com.SensorStreamer.Component.Net.Link.UDPLink.UDPLinkF;
 import com.SensorStreamer.Component.Listen.AudioListen;
 import com.SensorStreamer.Component.Listen.AudioListenF;
 import com.SensorStreamer.Component.Listen.SensorListen;
 import com.SensorStreamer.Component.Listen.SensorListenF;
-import com.SensorStreamer.Component.Net.NetExpand.Switch.RemoteSwitch;
-import com.SensorStreamer.Component.Net.NetExpand.Switch.RemoteSwitchF;
-import com.SensorStreamer.Component.Net.NetExpand.Switch.Switch;
-import com.SensorStreamer.Component.Net.NetExpand.Switch.SwitchF;
+import com.SensorStreamer.Component.Switch.RemoteSwitch;
+import com.SensorStreamer.Component.Switch.RemoteSwitchF;
+import com.SensorStreamer.Component.Switch.Switch;
+import com.SensorStreamer.Component.Switch.SwitchF;
+import com.SensorStreamer.Component.Net.RLink.NRLink.NRLinkF;
 import com.SensorStreamer.Component.Net.RLink.RLinkExpand.HeartBeat.HeartBeat;
+import com.SensorStreamer.Component.Net.RLink.RLinkF;
 import com.SensorStreamer.Component.Time.ReferenceTimeF;
 import com.SensorStreamer.Component.Time.Time;
 import com.SensorStreamer.Component.Time.TimeF;
-import com.SensorStreamer.Model.Control.AudioControl;
-import com.SensorStreamer.Model.Data.AudioData;
-import com.SensorStreamer.Model.Control.SensorControl;
-import com.SensorStreamer.Model.Data.SensorData;
+import com.SensorStreamer.Model.Listen.Control.AudioControl;
+import com.SensorStreamer.Model.Listen.Data.AudioData;
+import com.SensorStreamer.Model.Listen.Control.SensorControl;
+import com.SensorStreamer.Model.Listen.Data.SensorData;
 import com.SensorStreamer.Model.Switch.RemotePDU;
 import com.SensorStreamer.Utils.TypeTranDeter;
 import com.SensorStreamer.databinding.ActivityMainBinding;
@@ -73,9 +70,6 @@ public class MainActivity extends WearableActivity {
     private NRLink rLink;
     private HeartBeat rLinkHeartBeat;
 
-    private RTCPLink rtcpLink;
-//    rtcp 拓展功能
-//    private HeartBeatForRTCP rtcpHeartBeatForRTCP;
 //    监视器
     private AudioListen audioListen;
     private SensorListen sensorListen;
@@ -147,11 +141,9 @@ public class MainActivity extends WearableActivity {
         udpLink = linkF.create();
         linkF = new TCPLinkF();
         tcpLink = linkF.create();
-        rLink = new NRLink();
+        RLinkF rLinkF = new NRLinkF();
+        rLink = (NRLink) rLinkF.create();
         rLinkHeartBeat = new HeartBeat(rLink, heartBeatCallback);
-
-        linkF = new RTCPLinkF();
-        rtcpLink = (RTCPLink) linkF.create();
 
         AudioListenF audioListenF = new AudioListenF();
         audioListen = (AudioListen) audioListenF.create(this);
@@ -335,17 +327,9 @@ public class MainActivity extends WearableActivity {
         tcpRemoteSwitch.off();
 
         rLinkHeartBeat.stopHeartbeat();
-        Log.e("NRLink", "dadadadad");
         rLink.off();
-        long startTime = System.currentTimeMillis();
-        tcpLink.off();
-        Log.e("NRLink", "dadadadad");
-        long stopTime = System.currentTimeMillis();
-        System.out.println(stopTime - startTime);
-
-//        rtcpHeartBeatForRTCP.stopHeartbeat();
 //        关闭连接，允许更新地址
-        if(!udpLink.off() || !rtcpLink.off())
+        if(!udpLink.off() || !tcpLink.off())
             Log.e("MainActivity", "disconnectClick:Link off error");
         startService(MainActivity.this.sensorServiceIntent.setAction(SensorService.ACTION_STOP_FORE));
     }

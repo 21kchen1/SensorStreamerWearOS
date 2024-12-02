@@ -1,4 +1,4 @@
-package com.SensorStreamer.Model.Data;
+package com.SensorStreamer.Model.Listen.Data;
 
 /**
  * 音频数据结构
@@ -8,14 +8,14 @@ package com.SensorStreamer.Model.Data;
 
 public class AudioData extends TypeData {
     public static final String TYPE = "AudioData";
-    public byte[] audioData;
+    public byte[] values;
 
     /**
      * @param unixTimestamp 时间戳
-     * @param audioData 音频数据
+     * @param values 音频数据
      * */
-    public AudioData(long unixTimestamp, byte[] audioData) {
+    public AudioData(long unixTimestamp, byte[] values) {
         super(AudioData.TYPE, unixTimestamp);
-        this.audioData = audioData;
+        this.values = values;
     }
 }

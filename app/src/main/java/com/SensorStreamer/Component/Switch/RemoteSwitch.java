@@ -1,4 +1,4 @@
-package com.SensorStreamer.Component.Net.NetExpand.Switch;
+package com.SensorStreamer.Component.Switch;
 
 import android.util.Log;
 

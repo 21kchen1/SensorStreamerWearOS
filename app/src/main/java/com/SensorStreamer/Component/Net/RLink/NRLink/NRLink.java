@@ -1,8 +1,9 @@
-package com.SensorStreamer.Component.Net.RLink;
+package com.SensorStreamer.Component.Net.RLink.NRLink;
 
 import android.util.Log;
 
 import com.SensorStreamer.Component.Net.Link.Link;
+import com.SensorStreamer.Component.Net.RLink.RLink;
 import com.SensorStreamer.Utils.TypeTranDeter;
 
 import java.util.HashMap;
@@ -165,7 +166,7 @@ public class NRLink extends RLink {
                     if (!TypeTranDeter.canStr2JsonData(msg, RLink_PDU.class))
                         structMsg = new RLink_PDU(null, msg);
 //                    无对应复用名称
-                    if (!this.queueMap.containsKey(this.gson.fromJson(msg, RLink_PDU.class).reuseName))
+                    else if (!this.queueMap.containsKey(this.gson.fromJson(msg, RLink_PDU.class).reuseName))
                         structMsg = this.gson.fromJson(msg, RLink_PDU.class);
 
 //                    放入默认队列
