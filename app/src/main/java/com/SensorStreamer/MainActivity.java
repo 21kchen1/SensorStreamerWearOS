@@ -200,8 +200,8 @@ public class MainActivity extends WearableActivity {
      * */
     private final SensorListen.SensorCallback sensorCallback = new SensorListen.SensorCallback() {
         @Override
-        public void dealSensorData(String type, float[] data, long sensorTimestamp) {
-            SensorData sensorData = new SensorData(referenceTime.getTime(), sensorTimestamp, type, data);
+        public void dealSensorData(String sensorType, float[] data, long sensorTimestamp) {
+            SensorData sensorData = new SensorData(sensorType, referenceTime.getTime(), sensorTimestamp, data);
             String json = gson.toJson(sensorData);
 //            发送数据
             try {
@@ -238,7 +238,7 @@ public class MainActivity extends WearableActivity {
         if (sensorControl == null || sensorControl.sensors == null)
             sensorListen.launch(defaultSensors,0 ,this.sensorCallback);
         else
-            sensorListen.launch(sensorControl.sensors, sensorControl.sampling,this.sensorCallback);
+            sensorListen.launch(sensorControl.sensors, sensorControl.sampling, this.sensorCallback);
 
         if (audioControl == null)
             audioListen.launch(audioDefaultSampling, this.audioCallback);

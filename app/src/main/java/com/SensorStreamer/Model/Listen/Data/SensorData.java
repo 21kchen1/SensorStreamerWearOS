@@ -7,21 +7,19 @@ package com.SensorStreamer.Model.Listen.Data;
  * */
 
 public class SensorData extends TypeData {
-    public static final String TYPE = "SensorData";
+    public static final String TYPE = "SENSOR";
     public long sensorTimestamp;
-    public String sensorType;
     public float[] values;
 
     /**
+     * @param sensorType 传感器类型
      * @param unixTimestamp 系统时间戳
      * @param sensorTimestamp 传感器时间戳
-     * @param sensorType 传感器类型
      * @param values 传感器数据
      * */
-    public SensorData(long unixTimestamp, long sensorTimestamp, String sensorType, float[] values) {
-        super(SensorData.TYPE, unixTimestamp);
+    public SensorData(String sensorType, long unixTimestamp, long sensorTimestamp, float[] values) {
+        super(sensorType, unixTimestamp);
         this.sensorTimestamp = sensorTimestamp;
-        this.sensorType = sensorType;
         this.values = values;
     }
 }

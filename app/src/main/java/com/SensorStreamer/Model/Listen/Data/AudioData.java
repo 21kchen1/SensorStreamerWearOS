@@ -7,7 +7,7 @@ package com.SensorStreamer.Model.Listen.Data;
  * */
 
 public class AudioData extends TypeData {
-    public static final String TYPE = "AudioData";
+    public static final String TYPE = "AUDIO";
     public byte[] values;
 
     /**

@@ -25,11 +25,11 @@ public class SensorListen extends Listen {
     public interface SensorCallback extends ListenCallback {
         /**
          * 回调函数 用于处理数据
-         * @param type Sensor 类型
+         * @param sensorType Sensor 类型
          * @param data 传入 Sensor 数据
          * @param sensorTimestamp 与硬件绑定的时间戳
          * */
-        void dealSensorData(String type, float[] data, long sensorTimestamp);
+        void dealSensorData(String sensorType, float[] data, long sensorTimestamp);
     }
 
     private final static String LOG_TAG = "SensorListen";
