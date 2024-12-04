@@ -12,13 +12,13 @@ import android.hardware.SensorManager;
  * @version 2.0
  * */
 
-public abstract class Listen implements SensorEventListener {
+public abstract class Listen {
     /**
      * 通用回调函数接口
      * */
     public interface ListenCallback {}
 
-    protected final SensorManager sensorManager;
+    protected final Activity activity;
     protected boolean launchFlag, startFlag;
 
     /**
@@ -29,7 +29,7 @@ public abstract class Listen implements SensorEventListener {
      * 0 1 error
      * */
     public Listen(Activity activity) {
-        this.sensorManager = (SensorManager) activity.getSystemService(Context.SENSOR_SERVICE);
+        this.activity = activity;
         this.launchFlag = this.startFlag = false;
     }
 

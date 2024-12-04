@@ -8,9 +8,9 @@ import android.app.Activity;
  * @version 1.0
  * */
 
-public class SensorListenF extends ListenF {
+public class SensorListListenF extends ListenF {
     @Override
     public Listen create(Activity activity) {
-        return new SensorListen(activity);
+        return new SensorListListen(activity);
     }
 }

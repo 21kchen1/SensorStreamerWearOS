@@ -153,14 +153,4 @@ public class AudioListen extends Listen {
 //        1 0
         this.startFlag = false;
     }
-
-    @Override
-    public void onSensorChanged(SensorEvent sensorEvent) {
-
-    }
-
-    @Override
-    public void onAccuracyChanged(Sensor sensor, int i) {
-
-    }
 }

@@ -1,8 +1,10 @@
 package com.SensorStreamer.Component.Listen;
 
 import android.app.Activity;
+import android.content.Context;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.util.Log;
 
@@ -18,11 +20,11 @@ import java.util.List;
  * @version 1.0
  * */
 
-public class SensorListen extends Listen {
+public class SensorListListen extends Listen implements SensorEventListener {
     /**
-     * Sensor 回调函数类接口
+     * SensorList 回调函数类接口
      * */
-    public interface SensorCallback extends ListenCallback {
+    public interface SensorListCallback extends ListenCallback {
         /**
          * 回调函数 用于处理数据
          * @param sensorType Sensor 类型
@@ -34,9 +36,10 @@ public class SensorListen extends Listen {
 
     private final static String LOG_TAG = "SensorListen";
     private final HashMap<Integer, String> sensorDir;
+    private final SensorManager sensorManager;
     private final int intNull;
 //    回调函数
-    private SensorCallback callback;
+    private SensorListCallback callback;
 //    当采样率为 0 时 启动变化时传输数据
     private int samplingRate;
 //    需要监听的 sensor
@@ -45,9 +48,10 @@ public class SensorListen extends Listen {
     /**
      * 常量初始化
      * */
-    public SensorListen(Activity activity) {
+    public SensorListListen(Activity activity) {
         super(activity);
 
+        this.sensorManager = (SensorManager) this.activity.getSystemService(Context.SENSOR_SERVICE);
         this.sensorDir = new HashMap<>();
         this.sensorDir.put(Sensor.TYPE_ACCELEROMETER, "ACCELEROMETER");
         this.sensorDir.put(Sensor.TYPE_GYROSCOPE, "GYROSCOPE");
@@ -75,7 +79,7 @@ public class SensorListen extends Listen {
         this.samplingRate = this.intNull = -1;
 
         for (Sensor sensor : this.sensorManager.getSensorList(Sensor.TYPE_ALL)) {
-            Log.i(SensorListen.LOG_TAG ,"Support " + sensor.getName() + ", Type = " + sensor.getType());
+            Log.i(SensorListListen.LOG_TAG ,"Support " + sensor.getName() + ", Type = " + sensor.getType());
         }
     }
 
@@ -85,7 +89,7 @@ public class SensorListen extends Listen {
      * @param samplingRate 采样率
      * @param callback 数据处理回调函数
      * */
-    public synchronized boolean launch(int[] sensors, int samplingRate, SensorCallback callback) {
+    public synchronized boolean launch(int[] sensors, int samplingRate, SensorListCallback callback) {
 //        0 0
         if (!this.canLaunch()) return false;
 
@@ -125,13 +129,13 @@ public class SensorListen extends Listen {
             Sensor sensor = this.sensorManager.getDefaultSensor(type);
 //            是否有效设备或重复
             if (sensor == null || this.sensors.contains(sensor)) {
-                Log.i(SensorListen.LOG_TAG, "launch: The sensors are invalid or duplicate. SenorType = " + this.sensorDir.get(type));
+                Log.i(SensorListListen.LOG_TAG, "launch: The sensors are invalid or duplicate. SenorType = " + this.sensorDir.get(type));
                 continue;
             }
             this.sensors.add(sensor);
         }
 
-        this.callback = (SensorCallback) callback;
+        this.callback = (SensorListCallback) callback;
 
 //        1 0
         return this.launchFlag = true;
@@ -210,7 +214,7 @@ public class SensorListen extends Listen {
 //                使用字典将 type 转换为 String
                 this.callback.dealSensorData(this.sensorDir.get(sensorEvent.sensor.getType()), sensorEvent.values, sensorEvent.timestamp);
             } catch (Exception e) {
-                Log.e(SensorListen.LOG_TAG, "onSensorChanged:Exception", e);
+                Log.e(SensorListListen.LOG_TAG, "onSensorChanged:Exception", e);
             }
         });
         readChangedThread.start();
