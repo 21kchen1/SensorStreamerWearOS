@@ -1,9 +1,11 @@
-package com.SensorStreamer.Command.SensorCommand;
+package com.SensorStreamer.Services.Command.SensorCommand;
 
 import com.SensorStreamer.Component.Listen.SensorListen.SensorListen;
 
 /**
  * Sensor 命令
+ * @author chen
+ * @version 1.0
  * */
 public class SensorCommand {
     private final SensorListen sensorListen;

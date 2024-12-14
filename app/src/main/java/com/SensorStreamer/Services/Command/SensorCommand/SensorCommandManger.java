@@ -1,4 +1,4 @@
-package com.SensorStreamer.Command.SensorCommand;
+package com.SensorStreamer.Services.Command.SensorCommand;
 
 import android.app.Activity;
 import android.hardware.Sensor;
@@ -13,6 +13,8 @@ import java.util.HashMap;
 
 /**
  * Sensor 命令管理器
+ * @author chen
+ * @version 1.0
  * */
 public class SensorCommandManger {
 //    参数与对应的命令

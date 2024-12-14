@@ -19,11 +19,14 @@ import android.widget.TextView;
 
 import androidx.core.content.ContextCompat;
 
-import com.SensorStreamer.Command.SensorCommand.SensorCommandManger;
 import com.SensorStreamer.Component.Listen.SensorListen.AccelerometerListen;
 import com.SensorStreamer.Component.Listen.SensorListen.GyroscopeListen;
 import com.SensorStreamer.Component.Listen.SensorListen.MagneticFieldListen;
 import com.SensorStreamer.Component.Listen.SensorListen.RotationVectorListen;
+import com.SensorStreamer.Services.Command.Command;
+import com.SensorStreamer.Services.Command.ListenCommand.AudioCommand;
+import com.SensorStreamer.Services.Command.ListenCommand.SensorCommand;
+import com.SensorStreamer.Services.Command.ListenCommand.ListenCommandManger;
 import com.SensorStreamer.Component.Listen.SensorListen.SensorListen;
 import com.SensorStreamer.Component.Net.Link.Link;
 import com.SensorStreamer.Component.Net.Link.LinkF;
@@ -31,9 +34,7 @@ import com.SensorStreamer.Component.Net.RLink.NRLink.NRLink;
 import com.SensorStreamer.Component.Net.Link.TCPLink.TCPLinkF;
 import com.SensorStreamer.Component.Net.Link.UDPLink.UDPLinkF;
 import com.SensorStreamer.Component.Listen.AudioListen;
-import com.SensorStreamer.Component.Listen.AudioListenF;
 import com.SensorStreamer.Component.Listen.SensorListListen;
-import com.SensorStreamer.Component.Listen.SensorListListenF;
 import com.SensorStreamer.Component.Switch.RemoteSwitch;
 import com.SensorStreamer.Component.Switch.RemoteSwitchF;
 import com.SensorStreamer.Component.Switch.Switch;
@@ -77,18 +78,8 @@ public class MainActivity extends WearableActivity {
     private NRLink rLink;
     private HeartBeat rLinkHeartBeat;
 
-//    监视器
-    private AudioListen audioListen;
-    private SensorListListen sensorListListen;
-//    sensor 命令管理器
-    private SensorCommandManger sensorCommandManger;
-
-    private AccelerometerListen accelerometerListen;
-    private GyroscopeListen gyroscopeListen;
-    private MagneticFieldListen magneticFieldListen;
-    private RotationVectorListen rotationVectorListen;
-//    类型与监视器类的字典
-    private final HashMap<Integer, SensorListen> sensorListenDict = new HashMap<>();
+//    Listen 命令管理器
+    private ListenCommandManger listenCommandManger;
 
 //    获取基准时间
     private Time referenceTime;
@@ -162,22 +153,17 @@ public class MainActivity extends WearableActivity {
         rLink = (NRLink) rLinkF.create();
         rLinkHeartBeat = new HeartBeat(rLink, heartBeatCallback);
 
-        AudioListenF audioListenF = new AudioListenF();
-        audioListen = (AudioListen) audioListenF.create(this);
-        SensorListListenF sensorListListenF = new SensorListListenF();
-        sensorListListen = (SensorListListen) sensorListListenF.create(this);
-
-        accelerometerListen = new AccelerometerListen(this);
-        gyroscopeListen = new GyroscopeListen(this);
-        magneticFieldListen = new MagneticFieldListen(this);
-        rotationVectorListen = new RotationVectorListen(this);
-
-        sensorListenDict.put(Sensor.TYPE_ACCELEROMETER, accelerometerListen);
-        sensorListenDict.put(Sensor.TYPE_GYROSCOPE, gyroscopeListen);
-        sensorListenDict.put(Sensor.TYPE_MAGNETIC_FIELD, magneticFieldListen);
-        sensorListenDict.put(Sensor.TYPE_ROTATION_VECTOR, rotationVectorListen);
-
-        sensorCommandManger = new SensorCommandManger(this);
+//        设置命令
+        listenCommandManger = new ListenCommandManger();
+        listenCommandManger.addCommands(
+                new HashMap<String, Command>() {{
+                    put(Integer.toString(Sensor.TYPE_ACCELEROMETER), new SensorCommand(new AccelerometerListen(MainActivity.this)));
+                    put(Integer.toString(Sensor.TYPE_GYROSCOPE), new SensorCommand(new GyroscopeListen(MainActivity.this)));
+                    put(Integer.toString(Sensor.TYPE_MAGNETIC_FIELD), new SensorCommand(new MagneticFieldListen(MainActivity.this)));
+                    put(Integer.toString(Sensor.TYPE_ROTATION_VECTOR), new SensorCommand(new RotationVectorListen(MainActivity.this)));
+                    put("AUDIO", new AudioCommand(new AudioListen(MainActivity.this)));
+                }}
+        );
 
 //        创建远程开关
         SwitchF remoteSwitchF = new RemoteSwitchF();
@@ -230,7 +216,7 @@ public class MainActivity extends WearableActivity {
      * */
     private final SensorListListen.SensorListCallback sensorListCallback = new SensorListListen.SensorListCallback() {
         @Override
-        public void dealSensorData(String sensorType, float[] data, long sensorTimestamp) {
+        public void dealSensorData(int sensorType, float[] data, long sensorTimestamp) {
             SensorData sensorData = new SensorData(sensorType, referenceTime.getTime(), sensorTimestamp, data);
             String json = gson.toJson(sensorData);
 //            发送数据
@@ -247,7 +233,7 @@ public class MainActivity extends WearableActivity {
      * */
     private final SensorListen.SensorCallback sensorCallback = new SensorListen.SensorCallback() {
         @Override
-        public void dealSensorData(String sensorType, float[] data, long sensorTimestamp) {
+        public void dealSensorData(int sensorType, float[] data, long sensorTimestamp) {
             SensorData sensorData = new SensorData(sensorType, referenceTime.getTime(), sensorTimestamp, data);
             String json = gson.toJson(sensorData);
 //            发送数据
@@ -266,12 +252,6 @@ public class MainActivity extends WearableActivity {
         AudioControl audioControl = null;
         SensorControl sensorControl = null;
 
-//        int[] defaultSensors = new int[] {
-//                Sensor.TYPE_ACCELEROMETER,
-//                Sensor.TYPE_GYROSCOPE,
-//                Sensor.TYPE_ROTATION_VECTOR,
-//                Sensor.TYPE_MAGNETIC_FIELD,
-//        };
         int audioDefaultSampling = 16000;
 
         for (String data : dataList) {
@@ -281,47 +261,20 @@ public class MainActivity extends WearableActivity {
                 sensorControl = gson.fromJson(data, SensorControl.class);
         }
 
-//            启动相关组件
-//        if (sensorControl == null || sensorControl.sensors == null)
-//            sensorListListen.launch(defaultSensors,0 ,this.sensorListCallback);
-//        else
-//            sensorListListen.launch(sensorControl.sensors, sensorControl.sampling, this.sensorListCallback);
-        if (sensorControl == null || sensorControl.sensors == null) {
-            sensorCommandManger.executeAllLaunchCommand(sensorCallback);
-        } else {
+        if (sensorControl != null && sensorControl.sensors != null)
             for (int sensorType : sensorControl.sensors) {
-//                SensorListen sensorListen = this.sensorListenDict.getOrDefault(sensorType, null);
-//                if (sensorListen == null)
-//                    continue;
-//                sensorListen.launch(null, this.sensorCallback);
-//                sensorListen.startRead();
-                sensorCommandManger.executeLaunchCommand(sensorType, sensorCallback);
+                listenCommandManger.executeLaunchCommand(Integer.toString(sensorType), null, sensorCallback);
             }
-        }
 
-        if (audioControl == null)
-            audioListen.launch(audioDefaultSampling, this.audioCallback);
-        else
-            audioListen.launch(audioControl.sampling, this.audioCallback);
-
-//            开始读取数据
-//        sensorListListen.startRead();
-        audioListen.startRead();
+        if (audioControl != null)
+            listenCommandManger.executeLaunchCommand("AUDIO", new String[]{Integer.toString(audioControl.sampling)}, this.audioCallback);
     }
 
     /**
      * 关闭传感器
      * */
     public void offSensor() {
-//        for(SensorListen listen : this.sensorListenDict.values()) {
-//            listen.stopRead();
-//            listen.off();
-//        }
-        sensorCommandManger.executeAllOffCommand();
-        sensorListListen.stopRead();
-        audioListen.stopRead();
-        sensorListListen.off();
-        audioListen.off();
+        listenCommandManger.executeAllOffCommand();
     }
 
     /**
@@ -360,8 +313,6 @@ public class MainActivity extends WearableActivity {
 //                获取目标 IP
                 InetAddress aimIP = InetAddress.getByName(ipText.getText().toString());
                 udpLink.launch(aimIP, udpPort, 0, StandardCharsets.UTF_8);
-//                rtcpLink.launch(aimIP, tcpPort, 100, StandardCharsets.UTF_8);
-
                 tcpLink.launch(aimIP, tcpPort, 100, StandardCharsets.UTF_8);
 //                启动 rLink
                 rLink.launch(tcpLink);
@@ -371,7 +322,7 @@ public class MainActivity extends WearableActivity {
                 tcpRemoteSwitch.startListen(1024);
 //                添加心跳
                 rLink.addReuseName(HeartBeat.LOG_TAG);
-                rLinkHeartBeat.startHeartbeat(2000, 3, 2000);;
+                rLinkHeartBeat.startHeartbeat(2000, 3, 2000);
 //                启动远程开关
                 startForegroundService(MainActivity.this.sensorServiceIntent.setAction(SensorService.ACTION_START_FORE));
             } catch (Exception e) {
