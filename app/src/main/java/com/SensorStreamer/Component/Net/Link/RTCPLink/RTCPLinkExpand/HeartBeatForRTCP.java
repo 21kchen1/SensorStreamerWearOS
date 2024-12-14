@@ -4,6 +4,7 @@ import android.util.Log;
 
 import com.SensorStreamer.Component.Net.Link.Link;
 import com.SensorStreamer.Component.Net.Link.RTCPLink.RTCPLink;
+import com.SensorStreamer.Resource.String.NetString;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -29,7 +30,7 @@ public class HeartBeatForRTCP {
     }
 
     public final static String LOG_TAG = "HeartBeatForRTCP";
-    private final static String HEART_BEAT = "heartbeat";
+    private final static String HEART_BEAT = NetString.HEART_BEAT;
 //    同步锁
     private final Object RTTLock;
 //    回调函数

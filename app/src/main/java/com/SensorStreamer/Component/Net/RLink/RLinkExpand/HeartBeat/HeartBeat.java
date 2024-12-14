@@ -3,6 +3,7 @@ package com.SensorStreamer.Component.Net.RLink.RLinkExpand.HeartBeat;
 import android.util.Log;
 
 import com.SensorStreamer.Component.Net.RLink.RLink;
+import com.SensorStreamer.Resource.String.NetString;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -27,7 +28,7 @@ public class HeartBeat {
     }
 
     public final static String LOG_TAG = "HeartBeat";
-    private final static String HEART_BEAT = "heartbeat";
+    private final static String HEART_BEAT = NetString.HEART_BEAT;
     //    同步锁
     private final Object RTTLock;
     //    回调函数

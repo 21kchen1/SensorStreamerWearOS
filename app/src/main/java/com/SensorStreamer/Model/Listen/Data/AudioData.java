@@ -1,5 +1,7 @@
 package com.SensorStreamer.Model.Listen.Data;
 
+import com.SensorStreamer.Resource.String.ListenString;
+
 /**
  * 音频数据结构
  * @author chen
@@ -7,7 +9,7 @@ package com.SensorStreamer.Model.Listen.Data;
  * */
 
 public class AudioData extends TypeData {
-    public static final String TYPE = "AUDIO";
+    public static final String TYPE = ListenString.TYPE_AUDIO;
     public byte[] values;
 
     /**

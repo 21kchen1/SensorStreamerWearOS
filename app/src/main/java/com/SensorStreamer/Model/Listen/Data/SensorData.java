@@ -2,6 +2,8 @@ package com.SensorStreamer.Model.Listen.Data;
 
 import android.hardware.Sensor;
 
+import com.SensorStreamer.Resource.String.ListenString;
+
 import java.util.HashMap;
 
 /**
@@ -11,30 +13,30 @@ import java.util.HashMap;
  * */
 
 public class SensorData extends TypeData {
-    public static final String TYPE = "SENSOR";
+    public static final String TYPE = ListenString.TYPE_SENSOR;
 //    数据类型字典
     private final static HashMap<Integer, String> sensorTypeDir = new HashMap<Integer, String>(){{
-        put(Sensor.TYPE_ACCELEROMETER, "ACCELEROMETER");
-        put(Sensor.TYPE_GYROSCOPE, "GYROSCOPE");
-        put(Sensor.TYPE_ROTATION_VECTOR, "ROTATION_VECTOR");
-        put(Sensor.TYPE_MAGNETIC_FIELD, "MAGNETIC_FIELD");
-        put(Sensor.TYPE_LIGHT, "LIGHT");
-        put(Sensor.TYPE_PRESSURE, "PRESSURE");
-        put(Sensor.TYPE_GRAVITY, "GRAVITY");
-        put(Sensor.TYPE_LINEAR_ACCELERATION, "LINEAR_ACCELERATION");
-        put(Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED, "MAGNETIC_FIELD_UNCALIBRATED");
-        put(Sensor.TYPE_GAME_ROTATION_VECTOR, "GAME_ROTATION_VECTOR");
-        put(Sensor.TYPE_GYROSCOPE_UNCALIBRATED, "GYROSCOPE_UNCALIBRATED");
-        put(Sensor.TYPE_LOW_LATENCY_OFFBODY_DETECT, "LOW_LATENCY_OFFBODY_DETECT");
-        put(Sensor.TYPE_PROXIMITY, "PROXIMITY");
-        put(Sensor.TYPE_RELATIVE_HUMIDITY, "RELATIVE_HUMIDITY");
-        put(Sensor.TYPE_AMBIENT_TEMPERATURE, "AMBIENT_TEMPERATURE");
-        put(Sensor.TYPE_POSE_6DOF, "POSE_6DOF");
-        put(Sensor.TYPE_STATIONARY_DETECT, "STATIONARY_DETECT");
-        put(Sensor.TYPE_MOTION_DETECT, "MOTION_DETECT");
-        put(Sensor.TYPE_HEART_BEAT, "HEART_BEAT");
-        put(Sensor.TYPE_ACCELEROMETER_UNCALIBRATED, "ACCELEROMETER_UNCALIBRATED");
-        put(69682, "HEART_BEAT");
+        put(Sensor.TYPE_ACCELEROMETER, ListenString.TYPE_ACCELEROMETER);
+        put(Sensor.TYPE_GYROSCOPE, ListenString.TYPE_GYROSCOPE);
+        put(Sensor.TYPE_ROTATION_VECTOR, ListenString.TYPE_ROTATION_VECTOR);
+        put(Sensor.TYPE_MAGNETIC_FIELD, ListenString.TYPE_MAGNETIC_FIELD);
+        put(Sensor.TYPE_LIGHT, ListenString.TYPE_LIGHT);
+        put(Sensor.TYPE_PRESSURE, ListenString.TYPE_PRESSURE);
+        put(Sensor.TYPE_GRAVITY, ListenString.TYPE_GRAVITY);
+        put(Sensor.TYPE_LINEAR_ACCELERATION, ListenString.TYPE_LINEAR_ACCELERATION);
+        put(Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED, ListenString.TYPE_MAGNETIC_FIELD_UNCALIBRATED);
+        put(Sensor.TYPE_GAME_ROTATION_VECTOR, ListenString.TYPE_GAME_ROTATION_VECTOR);
+        put(Sensor.TYPE_GYROSCOPE_UNCALIBRATED, ListenString.TYPE_GYROSCOPE_UNCALIBRATED);
+        put(Sensor.TYPE_LOW_LATENCY_OFFBODY_DETECT, ListenString.TYPE_LOW_LATENCY_OFFBODY_DETECT);
+        put(Sensor.TYPE_PROXIMITY, ListenString.TYPE_PROXIMITY);
+        put(Sensor.TYPE_RELATIVE_HUMIDITY, ListenString.TYPE_RELATIVE_HUMIDITY);
+        put(Sensor.TYPE_AMBIENT_TEMPERATURE, ListenString.TYPE_AMBIENT_TEMPERATURE);
+        put(Sensor.TYPE_POSE_6DOF, ListenString.TYPE_POSE_6DOF);
+        put(Sensor.TYPE_STATIONARY_DETECT, ListenString.TYPE_STATIONARY_DETECT);
+        put(Sensor.TYPE_MOTION_DETECT, ListenString.TYPE_MOTION_DETECT);
+        put(Sensor.TYPE_HEART_BEAT, ListenString.TYPE_HEART_BEAT);
+        put(Sensor.TYPE_ACCELEROMETER_UNCALIBRATED, ListenString.TYPE_ACCELEROMETER_UNCALIBRATED);
+        put(69682, ListenString.TYPE_HEART_BEAT);
     }};
 
     public long sensorTimestamp;

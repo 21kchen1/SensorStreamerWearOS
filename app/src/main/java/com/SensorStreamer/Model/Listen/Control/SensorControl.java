@@ -1,5 +1,7 @@
 package com.SensorStreamer.Model.Listen.Control;
 
+import com.SensorStreamer.Resource.String.ListenString;
+
 /**
  * 传感器控制数据结构
  * @author chen
@@ -7,7 +9,8 @@ package com.SensorStreamer.Model.Listen.Control;
  * */
 
 public class SensorControl extends TypeControl {
-    public static final String TYPE = "SensorControl";
+    public static final String TYPE = ListenString.TYPE_SENSOR;
+//    传感器控制类型
     public int[] sensors;
 
     /**

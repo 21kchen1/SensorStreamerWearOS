@@ -4,6 +4,7 @@ import android.util.Log;
 
 import com.SensorStreamer.Component.Net.Link.Link;
 import com.SensorStreamer.Component.Net.Link.TCPLink.TCPLink;
+import com.SensorStreamer.Resource.String.NetString;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -28,7 +29,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class HTCPLink extends TCPLink {
     private final static String LOG_TAG = "HTCPLink";
     //    心跳标记
-    protected final static String HEARTBEAT = "heartbeat";
+    protected final static String HEARTBEAT = NetString.HEART_BEAT;
     //    主阻塞队列
     protected final LinkedBlockingQueue<String> receQueue, heartbeatQueue;
     //    信号
