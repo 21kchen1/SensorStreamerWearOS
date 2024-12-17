@@ -9,8 +9,7 @@ import android.hardware.SensorManager;
 import android.util.Log;
 
 import com.SensorStreamer.Component.Listen.Listen;
-
-import java.util.HashMap;
+import com.SensorStreamer.Resource.String.DataString;
 
 /**
  * 抽象 SensorListen 基于回调函数处理
@@ -29,7 +28,7 @@ public abstract class SensorListen extends Listen implements SensorEventListener
          * @param data 传入 Sensor 数据
          * @param sensorTimestamp 与硬件绑定的时间戳
          * */
-        void dealSensorData(int sensorType, float[] data, long sensorTimestamp);
+        void dealSensorData(String sensorType, float[] data, long sensorTimestamp);
     }
 
     private final static String LOG_TAG = "SensorListen";
@@ -137,6 +136,12 @@ public abstract class SensorListen extends Listen implements SensorEventListener
     }
 
     /**
+     * 获取数据类型
+     * @return 数据类型
+     */
+    protected abstract String getType();
+
+    /**
      * 当 Sensor 数据变化时执行回调函数
      * */
     @Override
@@ -149,7 +154,7 @@ public abstract class SensorListen extends Listen implements SensorEventListener
             try {
                 if (this.callback == null)
                     return;
-                this.callback.dealSensorData(sensorEvent.sensor.getType(), this.valuesProc(sensorEvent.values), sensorEvent.timestamp);
+                this.callback.dealSensorData(this.getType(), this.valuesProc(sensorEvent.values), sensorEvent.timestamp);
             } catch (Exception e) {
                 Log.e(SensorListen.LOG_TAG, "onSensorChanged:Exception", e);
             }

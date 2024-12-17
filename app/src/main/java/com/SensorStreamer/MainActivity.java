@@ -20,8 +20,11 @@ import android.widget.TextView;
 import androidx.core.content.ContextCompat;
 
 import com.SensorStreamer.Component.Listen.SensorListen.AccelerometerListen;
+import com.SensorStreamer.Component.Listen.SensorListen.AccelerometerUListen;
 import com.SensorStreamer.Component.Listen.SensorListen.GyroscopeListen;
+import com.SensorStreamer.Component.Listen.SensorListen.GyroscopeUListen;
 import com.SensorStreamer.Component.Listen.SensorListen.MagneticFieldListen;
+import com.SensorStreamer.Component.Listen.SensorListen.MagneticFieldUListen;
 import com.SensorStreamer.Component.Listen.SensorListen.RotationVectorListen;
 import com.SensorStreamer.Services.Command.Command;
 import com.SensorStreamer.Services.Command.ListenCommand.AudioCommand;
@@ -157,9 +160,9 @@ public class MainActivity extends WearableActivity {
         listenCommandManger = new ListenCommandManger();
         listenCommandManger.addCommands(
                 new HashMap<String, Command>() {{
-                    put(Integer.toString(Sensor.TYPE_ACCELEROMETER), new SensorCommand(new AccelerometerListen(MainActivity.this)));
-                    put(Integer.toString(Sensor.TYPE_GYROSCOPE), new SensorCommand(new GyroscopeListen(MainActivity.this)));
-                    put(Integer.toString(Sensor.TYPE_MAGNETIC_FIELD), new SensorCommand(new MagneticFieldListen(MainActivity.this)));
+                    put(Integer.toString(Sensor.TYPE_ACCELEROMETER), new SensorCommand(new AccelerometerListen(MainActivity.this), new AccelerometerUListen(MainActivity.this)));
+                    put(Integer.toString(Sensor.TYPE_GYROSCOPE), new SensorCommand(new GyroscopeListen(MainActivity.this), new GyroscopeUListen(MainActivity.this)));
+                    put(Integer.toString(Sensor.TYPE_MAGNETIC_FIELD), new SensorCommand(new MagneticFieldListen(MainActivity.this), new MagneticFieldUListen(MainActivity.this)));
                     put(Integer.toString(Sensor.TYPE_ROTATION_VECTOR), new SensorCommand(new RotationVectorListen(MainActivity.this)));
                     put("AUDIO", new AudioCommand(new AudioListen(MainActivity.this)));
                 }}
@@ -216,7 +219,7 @@ public class MainActivity extends WearableActivity {
      * */
     private final SensorListListen.SensorListCallback sensorListCallback = new SensorListListen.SensorListCallback() {
         @Override
-        public void dealSensorData(int sensorType, float[] data, long sensorTimestamp) {
+        public void dealSensorData(String sensorType, float[] data, long sensorTimestamp) {
             SensorData sensorData = new SensorData(sensorType, referenceTime.getTime(), sensorTimestamp, data);
             String json = gson.toJson(sensorData);
 //            发送数据
@@ -233,7 +236,7 @@ public class MainActivity extends WearableActivity {
      * */
     private final SensorListen.SensorCallback sensorCallback = new SensorListen.SensorCallback() {
         @Override
-        public void dealSensorData(int sensorType, float[] data, long sensorTimestamp) {
+        public void dealSensorData(String sensorType, float[] data, long sensorTimestamp) {
             SensorData sensorData = new SensorData(sensorType, referenceTime.getTime(), sensorTimestamp, data);
             String json = gson.toJson(sensorData);
 //            发送数据
@@ -317,11 +320,11 @@ public class MainActivity extends WearableActivity {
 //                启动 rLink
                 rLink.launch(tcpLink);
 //                添加远程开关服务
-                rLink.addReuseName(RemoteSwitch.LOG_TAG);
+                rLink.addReuseName(RemoteSwitch.REUSE_NAME);
                 tcpRemoteSwitch.launch(rLink, MainActivity.this.remoteCallback);
                 tcpRemoteSwitch.startListen(1024);
 //                添加心跳
-                rLink.addReuseName(HeartBeat.LOG_TAG);
+                rLink.addReuseName(HeartBeat.REUSE_NAME);
                 rLinkHeartBeat.startHeartbeat(2000, 3, 2000);
 //                启动远程开关
                 startForegroundService(MainActivity.this.sensorServiceIntent.setAction(SensorService.ACTION_START_FORE));

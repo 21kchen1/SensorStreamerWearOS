@@ -5,6 +5,7 @@ import android.util.Log;
 import com.SensorStreamer.Component.Net.Link.Link;
 import com.SensorStreamer.Component.Net.Net;
 import com.SensorStreamer.Model.Switch.RemotePDU;
+import com.SensorStreamer.Resource.String.NetString;
 import com.SensorStreamer.Utils.TypeTranDeter;
 
 /**
@@ -23,6 +24,7 @@ public class RemoteSwitch extends Switch {
     }
 
     public final static String LOG_TAG = "RemoteSwitch";
+    public final static String REUSE_NAME = NetString.REUSE_NAME_REMOTE_SWITCH;
 //    回调函数
     private RemoteCallback callback;
 //    连接

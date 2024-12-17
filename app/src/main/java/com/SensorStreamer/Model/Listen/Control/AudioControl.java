@@ -1,6 +1,6 @@
 package com.SensorStreamer.Model.Listen.Control;
 
-import com.SensorStreamer.Resource.String.ListenString;
+import com.SensorStreamer.Resource.String.DataString;
 
 /**
  * 音频控制数据结构
@@ -9,7 +9,7 @@ import com.SensorStreamer.Resource.String.ListenString;
  * */
 
 public class AudioControl extends TypeControl {
-    public static final String TYPE = ListenString.TYPE_AUDIO;
+    public static final String TYPE = DataString.TYPE_AUDIO;
 
     /**
      * @param sampling 采样率

@@ -3,6 +3,8 @@ package com.SensorStreamer.Component.Listen.SensorListen;
 import android.app.Activity;
 import android.hardware.Sensor;
 
+import com.SensorStreamer.Resource.String.DataString;
+
 /**
  * RotationVectorListen 允许自定义数据处理
  * @author chen
@@ -17,5 +19,10 @@ public class RotationVectorListen extends SensorListen {
     @Override
     protected Sensor getSensor() {
         return this.sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
+    }
+
+    @Override
+    protected String getType() {
+        return DataString.TYPE_ROTATION_VECTOR;
     }
 }

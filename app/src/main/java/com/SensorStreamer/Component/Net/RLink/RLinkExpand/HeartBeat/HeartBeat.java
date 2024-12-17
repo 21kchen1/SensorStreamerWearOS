@@ -28,7 +28,8 @@ public class HeartBeat {
     }
 
     public final static String LOG_TAG = "HeartBeat";
-    private final static String HEART_BEAT = NetString.HEART_BEAT;
+    public final static String REUSE_NAME = NetString.REUSE_NAME_HEART_BEAT;
+    private final static String HEART_BEAT = NetString.VALUE_HEART_BEAT;
     //    同步锁
     private final Object RTTLock;
     //    回调函数

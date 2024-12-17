@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class HTCPLink extends TCPLink {
     private final static String LOG_TAG = "HTCPLink";
     //    心跳标记
-    protected final static String HEARTBEAT = NetString.HEART_BEAT;
+    protected final static String HEARTBEAT = NetString.VALUE_HEART_BEAT;
     //    主阻塞队列
     protected final LinkedBlockingQueue<String> receQueue, heartbeatQueue;
     //    信号

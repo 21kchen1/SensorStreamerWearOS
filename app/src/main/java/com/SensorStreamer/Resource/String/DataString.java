@@ -1,11 +1,11 @@
 package com.SensorStreamer.Resource.String;
 
 /**
- * Listen 类使用的通用字符串
+ * Data 类使用的通用字符串
  * @author chen
  * @version 1.0
  */
-public class ListenString {
+public class DataString {
 //    字符串类型
     public static final String TYPE_SENSOR = "SENSOR";
     public static final String TYPE_AUDIO = "AUDIO";

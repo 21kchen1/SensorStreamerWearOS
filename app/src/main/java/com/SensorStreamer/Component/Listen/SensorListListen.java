@@ -31,7 +31,7 @@ public class SensorListListen extends Listen implements SensorEventListener {
          * @param data 传入 Sensor 数据
          * @param sensorTimestamp 与硬件绑定的时间戳
          * */
-        void dealSensorData(int sensorType, float[] data, long sensorTimestamp);
+        void dealSensorData(String sensorType, float[] data, long sensorTimestamp);
     }
 
     private final static String LOG_TAG = "SensorListen";
@@ -211,7 +211,7 @@ public class SensorListListen extends Listen implements SensorEventListener {
             try {
                 if (this.callback == null)
                     return;
-                this.callback.dealSensorData(sensorEvent.sensor.getType(), sensorEvent.values, sensorEvent.timestamp);
+                this.callback.dealSensorData(this.sensorDir.get(sensorEvent.sensor.getType()), sensorEvent.values, sensorEvent.timestamp);
             } catch (Exception e) {
                 Log.e(SensorListListen.LOG_TAG, "onSensorChanged:Exception", e);
             }

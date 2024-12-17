@@ -6,24 +6,24 @@ import android.hardware.Sensor;
 import com.SensorStreamer.Resource.String.DataString;
 
 /**
- * GyroscopeListen 允许自定义数据处理
+ * GyroscopeUListen 未校准的 允许自定义数据处理
  * @author chen
  * @version 1.0
  * */
 
-public class GyroscopeListen extends SensorListen {
+public class GyroscopeUListen extends SensorListen {
 
-    public GyroscopeListen(Activity activity) {
+    public GyroscopeUListen(Activity activity) {
         super(activity);
     }
 
     @Override
     protected Sensor getSensor() {
-        return this.sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
+        return this.sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE_UNCALIBRATED);
     }
 
     @Override
     protected String getType() {
-        return DataString.TYPE_GYROSCOPE;
+        return DataString.TYPE_GYROSCOPE_UNCALIBRATED;
     }
 }

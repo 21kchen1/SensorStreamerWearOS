@@ -3,6 +3,8 @@ package com.SensorStreamer.Component.Listen.SensorListen;
 import android.app.Activity;
 import android.hardware.Sensor;
 
+import com.SensorStreamer.Resource.String.DataString;
+
 /**
  * AccelerometerListen 允许自定义数据处理
  * @author chen
@@ -18,5 +20,10 @@ public class AccelerometerListen extends SensorListen {
     @Override
     protected Sensor getSensor() {
         return this.sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+    }
+
+    @Override
+    protected String getType() {
+        return DataString.TYPE_ACCELEROMETER;
     }
 }

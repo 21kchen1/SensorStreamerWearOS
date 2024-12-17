@@ -30,7 +30,7 @@ public class HeartBeatForRTCP {
     }
 
     public final static String LOG_TAG = "HeartBeatForRTCP";
-    private final static String HEART_BEAT = NetString.HEART_BEAT;
+    private final static String HEART_BEAT = NetString.VALUE_HEART_BEAT;
 //    同步锁
     private final Object RTTLock;
 //    回调函数

@@ -6,5 +6,10 @@ package com.SensorStreamer.Resource.String;
  * @version 1.0
  */
 public class NetString {
-    public static final String HEART_BEAT = "heartbeat";
+//    特殊值
+    public static final String VALUE_HEART_BEAT = "heartbeat";
+
+//    复用名
+    public static final String REUSE_NAME_HEART_BEAT = "HeartBeat";
+    public static final String REUSE_NAME_REMOTE_SWITCH = "RemoteSwitch";
 }
