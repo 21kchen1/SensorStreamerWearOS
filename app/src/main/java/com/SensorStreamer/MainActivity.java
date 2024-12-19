@@ -11,12 +11,12 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.PowerManager;
-import android.support.wearable.activity.WearableActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
 import com.SensorStreamer.Component.Listen.SensorListen.AccelerometerListen;
@@ -65,7 +65,7 @@ import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class MainActivity extends WearableActivity {
+public class MainActivity extends AppCompatActivity {
 
     private static final String LOG_TAG = "MainActivity";
     private TextView ipText;
@@ -146,7 +146,7 @@ public class MainActivity extends WearableActivity {
 //        请求锁
         powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
         wakeLockAcquire();
-        setAmbientEnabled();
+//        setAmbientEnabled();
 
 //        创建 Link 类
         LinkF linkF = new UDPLinkF();
@@ -309,7 +309,6 @@ public class MainActivity extends WearableActivity {
      * 点击 connect 后执行
      * */
     private void connectClick() {
-//        启动通知
         new Thread(() -> {
             try {
 //                检验 IP 格式
