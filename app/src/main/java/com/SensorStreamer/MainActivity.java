@@ -53,6 +53,7 @@ import com.SensorStreamer.Model.Listen.Data.AudioData;
 import com.SensorStreamer.Model.Listen.Control.SensorControl;
 import com.SensorStreamer.Model.Listen.Data.SensorData;
 import com.SensorStreamer.Model.Switch.RemotePDU;
+import com.SensorStreamer.Utils.PatternMatch;
 import com.SensorStreamer.Utils.TypeTranDeter;
 import com.SensorStreamer.databinding.ActivityMainBinding;
 import com.google.gson.Gson;
@@ -255,8 +256,6 @@ public class MainActivity extends WearableActivity {
         AudioControl audioControl = null;
         SensorControl sensorControl = null;
 
-        int audioDefaultSampling = 16000;
-
         for (String data : dataList) {
             if (TypeTranDeter.canStr2JsonData(data, AudioControl.class) && AudioControl.TYPE.equals(gson.fromJson(data, AudioControl.class).type))
                 audioControl = gson.fromJson(data, AudioControl.class);
@@ -313,8 +312,12 @@ public class MainActivity extends WearableActivity {
 //        启动通知
         new Thread(() -> {
             try {
+//                检验 IP 格式
+                String aimIPString = ipText.getText().toString();
+                if (!PatternMatch.ipv4SimpleMatch(aimIPString))
+                    aimIPString = null;
 //                获取目标 IP
-                InetAddress aimIP = InetAddress.getByName(ipText.getText().toString());
+                InetAddress aimIP = InetAddress.getByName(aimIPString);
                 udpLink.launch(aimIP, udpPort, 0, StandardCharsets.UTF_8);
                 tcpLink.launch(aimIP, tcpPort, 100, StandardCharsets.UTF_8);
 //                启动 rLink
@@ -326,10 +329,13 @@ public class MainActivity extends WearableActivity {
 //                添加心跳
                 rLink.addReuseName(HeartBeat.REUSE_NAME);
                 rLinkHeartBeat.startHeartbeat(2000, 3, 2000);
-//                启动远程开关
+//                启动前台服务
                 startForegroundService(MainActivity.this.sensorServiceIntent.setAction(SensorService.ACTION_START_FORE));
+//                Connected
+                updateInfoText(R.string.text_info_connected);
             } catch (Exception e) {
                 Log.e(LOG_TAG, "connectClick:Exception", e);
+//                Connect Fail
                 updateInfoText(R.string.text_info_fail);
                 disconnectClick();
             }
@@ -365,9 +371,9 @@ public class MainActivity extends WearableActivity {
      * 点击 connect 时的回调函数
      * */
     private final View.OnClickListener connectCallback = (arg0) -> {
+//        Connecting
+        updateInfoText(R.string.text_info_connecting);
         connectClick();
-//        Connected
-        updateInfoText(R.string.text_info_connected);
     };
 
     /**

@@ -7,7 +7,7 @@ import com.google.gson.JsonSyntaxException;
 
 
 /**
- * 判断类型转换是否成功的工具函数
+ * 类型转换可行性验证工具函数
  * @author chen
  * @version 1.0
  * */
