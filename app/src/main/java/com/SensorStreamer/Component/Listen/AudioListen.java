@@ -21,9 +21,10 @@ public class AudioListen extends Listen {
     public interface AudioCallback extends ListenCallback {
         /**
          * 回调函数 用于处理数据
+         * @param samplingRate 采样率
          * @param data 传入音频数据
          * */
-        void dealAudioData(byte[] data);
+        void dealAudioData(int samplingRate, byte[] data);
     }
 
     private final static String LOG_TAG = "AudioListen";
@@ -32,6 +33,8 @@ public class AudioListen extends Listen {
     private AudioCallback callback;
 //    音频记录
     private AudioRecord audioRecord;
+//    采样率
+    private int samplingRate;
 //    最小缓存大小
     private int minBufSize;
 //    开始线程
@@ -72,10 +75,10 @@ public class AudioListen extends Listen {
         if (params == null || params.length < 1 || !TypeTranDeter.canStr2Num(params[0]) || Integer.parseInt(params[0]) <= 0)
             return false;
 
-        int samplingRate = Integer.parseInt(params[0]);
-        this.minBufSize = AudioRecord.getMinBufferSize(samplingRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
+        this.samplingRate = Integer.parseInt(params[0]);
+        this.minBufSize = AudioRecord.getMinBufferSize(this.samplingRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
 
-        this.audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC, samplingRate, AudioFormat.CHANNEL_IN_MONO,
+        this.audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC, this.samplingRate, AudioFormat.CHANNEL_IN_MONO,
                 AudioFormat.ENCODING_PCM_16BIT, minBufSize * 10);
 
         this.callback = (AudioCallback)callback;
@@ -122,7 +125,7 @@ public class AudioListen extends Listen {
                     if (nRead <= 0 || this.callback == null) {
                         continue;
                     }
-                    this.callback.dealAudioData(buf);
+                    this.callback.dealAudioData(this.samplingRate, buf);
                 }
             } catch (Exception e) {
                 Log.e(AudioListen.LOG_TAG, "startRead.readThread:Exception", e);

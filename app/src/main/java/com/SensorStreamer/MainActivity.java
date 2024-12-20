@@ -203,8 +203,8 @@ public class MainActivity extends AppCompatActivity {
      * */
     private final AudioListen.AudioCallback audioCallback = new AudioListen.AudioCallback () {
         @Override
-        public void dealAudioData(byte[] data) {
-            AudioData audioData = new AudioData(referenceTime.getTime(), data);
+        public void dealAudioData(int samplingRate, byte[] data) {
+            AudioData audioData = new AudioData(referenceTime.getTime(), samplingRate, data);
             String json = gson.toJson(audioData);
 //            发送数据
             try {
