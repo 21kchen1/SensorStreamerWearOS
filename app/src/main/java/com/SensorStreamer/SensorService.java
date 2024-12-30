@@ -32,6 +32,8 @@ public class SensorService extends Service {
         }
 
         if (SensorService.ACTION_START_FORE.equals(intent.getAction())) {
+            if (this.notification == null)
+                this.notification = createNotification();
             startForeground(1, this.notification);
             return START_STICKY;
         }
@@ -58,7 +60,7 @@ public class SensorService extends Service {
         String description = "Channel for sensor streaming";
         int importance = NotificationManager.IMPORTANCE_DEFAULT;
 //        渠道
-        NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name, importance);
+        NotificationChannel channel = new NotificationChannel(SensorService.CHANNEL_ID, name, importance);
         channel.setDescription(description);
 //        管理者
         NotificationManager notificationManager = getSystemService(NotificationManager.class);
