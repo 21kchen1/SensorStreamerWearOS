@@ -45,7 +45,8 @@ public class RemoteSwitch extends Switch {
     @Override
     public synchronized boolean launch(Net link, SwitchCallback callback) {
 //        0 0
-        if (!this.canLaunch()) return false;
+        if (!this.canLaunch())
+            return false;
 
         if (!link.canSend() || !link.canRece()) return false;
 

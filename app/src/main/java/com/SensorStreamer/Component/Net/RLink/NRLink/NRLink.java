@@ -127,6 +127,9 @@ public class NRLink extends RLink {
     public boolean addReuseName(String reuseName) {
         if (!this.canRece())
             return false;
+//        查看是否重复
+        if (this.queueMap.containsKey(reuseName))
+            return false;
 
         LinkedBlockingQueue<RLink_PDU> queue = new LinkedBlockingQueue<>();
         this.queueMap.put(reuseName, queue);
